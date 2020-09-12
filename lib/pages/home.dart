@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:taskz/custom_widgets/custom_list.dart';
+import 'package:taskz/custom_widgets/custom_reorderable_listview.dart';
 import 'package:taskz/model/label_model.dart';
 import 'add_task.dart';
 import 'package:taskz/pages/drawer.dart';
@@ -12,13 +13,16 @@ class Home extends StatelessWidget {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       endDrawer: CustomDrawer(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: (){
-          Navigator.of(context).pushNamed('/add_task');
-        },
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        foregroundColor: Theme.of(context).colorScheme.onSecondary,
-        child: Icon(Icons.add)
+      floatingActionButton: DraggableFloatingActionButton(
+        key: GlobalKey<DraggableFloatingActionButtonState>(),
+        floatingActionButton: FloatingActionButton(
+            onPressed: (){
+              Navigator.of(context).pushNamed('/add_task');
+            },
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            foregroundColor: Theme.of(context).colorScheme.onSecondary,
+            child: Icon(Icons.add)
+        ),
       ),
       body: Stack(
         alignment: Alignment.topCenter,

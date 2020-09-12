@@ -6,6 +6,7 @@ import 'package:path/path.dart';
 import 'package:taskz/model/data/label.dart';
 import 'package:taskz/model/data/task.dart';
 
+//todo beautify this class
 /// A non-extendable and non-instantiable helper class that provides utility to
 /// interact with SQLite
 class DatabaseProvider {
@@ -13,6 +14,7 @@ class DatabaseProvider {
 
   /// must be called right after getting new instance
   Future<void> init() async {
+    print('init called()');
     await this.database;
   }
 
@@ -44,10 +46,28 @@ class DatabaseProvider {
 
     _db = await openDatabase(
       join(await getDatabasesPath(), _dbName),
+      version: 2,
       onConfigure: (db) async { await db.execute("PRAGMA foreign_keys = ON"); },
+      onUpgrade: _upgrade,
     );
     return _db;
   }
+
+  //Updating database schema to enable subtasks reordering
+  Future<void> _upgrade(Database db, int oldVersion, int newVersion) async {
+    //upgrade version 2
+    //add index column to task table
+    if (oldVersion < newVersion) {
+      try {
+        db.execute('ALTER TABLE `Task` ADD `index` int');
+      } on DatabaseException catch(e) {
+        print('Error during update database' + e.toString());
+        //exit program
+        SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+      }
+    }
+  }
+
 
 
   /// Get tags from database
@@ -87,20 +107,23 @@ class DatabaseProvider {
 
   /// Get today's tasks from database
   ///
-  /// After getting the instance of [database], it queries today's tasks.
-  /// Only unfinished tasks before 12 o'clock will be returned.
-  Future<List<Task>> get todayTasks async {
+  /// Only unfinished tasks before 12 o'clock pm will be returned.
+  /// It returns a 2-item list
+  /// [
+  ///   everySingleTask:     Map<int, Task>,
+  ///   topLevelTasks:       List<Task>
+  /// ]
+  Future<List<dynamic>> get todayTasks async {
     final Database db = await database;
 
     final List<Map<String, dynamic>> results = await db.rawQuery(_todayTaskSQL);
 
-    //create a map
     Map<int, Task> map = {};
     Set<Task> topLevelTasks = {};
 
     for (var row in results) {
-      //check if it isn't present in the map
       Task newTask;
+      //initialize task in map
       if (!map.containsKey(row['id'])) {
         newTask = Task.fromData(
             row['id'],
@@ -109,7 +132,8 @@ class DatabaseProvider {
             row['isCompleted'],
             row['priority'],
             [],
-            []
+            [],
+            row['parentTaskId']
         );
         map[ row['id'] ] = newTask;
       } else {
@@ -118,25 +142,23 @@ class DatabaseProvider {
           ..deadlineInSeconds = row['deadline']
           ..isCompleted1 = row['isCompleted']
           ..priority = row['priority']
+          ..parentId = row['parentTaskId']
           ..addLabel(row['tagId']);
         newTask = map[ row['id'] ];
       }
-
+      //add to its parent
       if (row['parentTaskId'] != null) {
-        if (!map.containsKey(row['parentTaskId']))
-          map[ row['parentTaskId'] ] = Task(null, id: row['parentTaskId'], deadline: null, );
+        if (!map.containsKey(row['parentTaskId'])) //creates a temporary placeholder
+          map[ row['parentTaskId'] ] = Task(null, id: row['parentTaskId'], deadline: null, subTask: [newTask],);
         else
           map[ row['parentTaskId'] ].addTask(newTask);
       } else
         topLevelTasks.add(newTask);
     }
-
-    map.forEach((key, task) {
-      if (task.description == null)
-        topLevelTasks.add(task);
-    });
-
-    return topLevelTasks.toList();
+    //Adds topLevelTasks if its parentTask is not included in today's tasks
+    map.forEach((id, task) => task.description ?? topLevelTasks.addAll(task.subTask));
+    map.removeWhere((id, task) => task.description == null);
+    return [map, topLevelTasks.toList()];
   }
 
   /// inserts a task into database
@@ -151,7 +173,7 @@ class DatabaseProvider {
 
     int id;
     await db.transaction((txn) async {
-      id = await db.insert('Task', map, conflictAlgorithm: ConflictAlgorithm.replace);
+      id = await txn.insert('Task', map, conflictAlgorithm: ConflictAlgorithm.replace);
 
       final batch = txn.batch();
       task.labelIds.forEach((labelId) {
@@ -200,4 +222,15 @@ WHERE isCompleted = 0
 			AND deadline < strftime('%s', 'now', 'localtime', '+1 day', 'start of day'))
 		);
   ''';
+
+  Future<void> completeTask(int id) async {
+    final Database db = await database;
+    db.rawUpdate('''
+      UPDATE `Task` 
+      set `isCompleted` = 1 
+      where `parentTaskId` = ? OR `id` = ?;
+    ''',
+      [id, id]
+    );
+  }
 }

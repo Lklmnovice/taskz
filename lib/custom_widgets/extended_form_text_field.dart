@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui;
 
-
+//todo: fix searching algo
 class ExtendedTextFormField extends FormField<String> {
 
   ExtendedTextFormField ({
@@ -127,7 +127,7 @@ class ExtendedTextFormField extends FormField<String> {
 
           return ExtendedTextField(
             specialTextSpanBuilder: specialTextSpanBuilder,
-            controller: state._effectiveController,
+            controller: controller,
             focusNode: focusNode,
             decoration: effectiveDecoration.copyWith(errorText: field.errorText),
             keyboardType: keyboardType,
@@ -525,7 +525,7 @@ class _TextFormFieldState extends FormFieldState<String> {
   }
 
   @override
-  void didUpdateWidget(TextFormField oldWidget) {
+  void didUpdateWidget(ExtendedTextFormField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.controller != oldWidget.controller) {
       oldWidget.controller?.removeListener(_handleControllerChanged);
@@ -551,7 +551,7 @@ class _TextFormFieldState extends FormFieldState<String> {
   void reset() {
     super.reset();
     setState(() {
-      _effectiveController.text = widget.initialValue;
+      _effectiveController.clear();
     });
   }
 

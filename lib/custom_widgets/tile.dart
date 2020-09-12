@@ -1,53 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:taskz/custom_widgets/circular_check_box.dart';
 import 'package:taskz/model/label_model.dart';
 import 'package:taskz/model/data/task.dart';
 
+import 'package:taskz/model/task_model.dart';
+import 'package:taskz/services/locator.dart';
 
 class CustomTile extends StatelessWidget {
-
+  final Key key;
   final List<CustomTile> subTasks;
   final Task task;
   final bool isParent;
 
-  CustomTile({@required this.task, @required this.subTasks, this.isParent=false});
+  CustomTile(
+      {this.key,
+      @required this.task,
+      @required this.subTasks,
+      this.isParent = false})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: isParent
-          ? BoxDecoration(
-        boxShadow: kElevationToShadow[3],
-        borderRadius: BorderRadius.all(Radius.circular(6))
-      )
-          : null,
-      child: Material(
+    return Card(
+        margin: EdgeInsets.symmetric(
+          vertical: 8,
+        ),
+        shape: isParent
+            ? ContinuousRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)))
+            : null,
+        elevation: isParent ? 4 : 0,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            _CustomTileContent(task:task,),
+            _CustomTileContent(
+              isParent: isParent,
+              task: task,
+            ),
             if (subTasks.isNotEmpty)
               Padding(
                 padding: EdgeInsets.only(left: 24),
-                child: ListView(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics() ,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: subTasks,
                 ),
               ),
           ],
-        ),
-      ),
-    );
+        ));
   }
 }
 
-
-
 class _CustomTileContent extends StatefulWidget {
   final Task task;
+  final bool isParent;
 
-  _CustomTileContent({@required this.task});
-
+  _CustomTileContent({@required this.task, @required this.isParent});
 
   @override
   _CustomTileContentState createState() => _CustomTileContentState();
@@ -59,41 +68,58 @@ class _CustomTileContentState extends State<_CustomTileContent> {
   @override
   Widget build(BuildContext context) {
     return Ink(
-      height: 60,
+      height: widget.isParent ||
+              (widget.task.labelIds != null && widget.task.labelIds.isNotEmpty)
+          ? 64
+          : 32,
       child: InkWell(
         onTap: _changeState,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
           children: <Widget>[
-            Checkbox(
-              onChanged: (newValue){_changeState();},
-              value: this.state,
-            ),
-            SizedBox(width: 12,),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  Text(this.widget.task.description,
-                    style: TextStyle(fontSize: 16),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  Consumer<LabelModel>(
-                    builder: (context, model,_) {
-                      return Row(
-                        children: <Widget>[
-                          for (var id in this.widget.task.labelIds) ...[
-                            model.getTagByID(id),
-                            SizedBox(width: 12)
-                          ]
-                        ],
-                      );},
-                  ),
-                ],),
-            ),
-          ],),
+            Flexible(
+                fit: FlexFit.tight,
+                flex: 3,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    CircularCheckBox(
+                      materialTapTargetSize: MaterialTapTargetSize.padded,
+                      visualDensity: VisualDensity.compact,
+                      onChanged: (newValue) => _changeState(),
+                      value: this.state,
+                    ),
+                    SizedBox(
+                      width: 12,
+                    ),
+                    Text(
+                      this.widget.task.description,
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).colorScheme.primary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                )),
+            if (widget.task.labelIds != null && widget.task.labelIds.isNotEmpty)
+              Flexible(
+                fit: FlexFit.tight,
+                flex: 1,
+                child: Consumer<LabelModel>(
+                  builder: (context, model, _) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: <Widget>[
+                        for (var id in widget.task.labelIds) ...[
+                          model.getTagByID(id),
+                          SizedBox(width: 12)
+                        ]
+                      ],
+                    );
+                  },
+                ),
+              )
+          ],
+        ),
       ),
     );
   }
@@ -102,9 +128,13 @@ class _CustomTileContentState extends State<_CustomTileContent> {
     setState(() {
       //todo invoke task detail page
       this.state = !this.state;
+      if (state) {
+        Future.delayed(
+            Duration(
+              milliseconds: 350,
+            ),
+            () => locator<TaskModel>().completeTask(context, widget.task.id));
+      }
     });
-
   }
 }
-
-

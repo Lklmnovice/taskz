@@ -18,8 +18,10 @@ class Task {
   bool isCompleted;
   int priority;
 
-  List<Task> subTask;
-  List<int> labelIds;
+  int parentId;
+
+  List<Task> subTask=[];
+  List<int> labelIds=[];
 
   Task(this.description, {
     this.id,
@@ -27,7 +29,8 @@ class Task {
     this.isCompleted=false,
     this.priority=1,
     this.subTask,
-    this.labelIds}) {
+    this.labelIds,
+    this.parentId}) {
 
     this.subTask ??= [];
     this.labelIds ??= [];
@@ -37,7 +40,7 @@ class Task {
       int seconds,
       int isCompleted,
       int priority,
-      [List<Task> subTask, List<int> labelIds]) {
+      [List<Task> subTask, List<int> labelIds, parentId]) {
 
     var task = Task(
       description,
@@ -45,6 +48,7 @@ class Task {
       priority: priority,
       subTask: subTask,
       labelIds: labelIds,
+      parentId: parentId,
     ) ..isCompleted1 = isCompleted
       ..deadlineInSeconds = seconds;
 
@@ -66,7 +70,7 @@ class Task {
   }
 
   int get deadlineInSeconds {
-    return deadline?.millisecondsSinceEpoch ?? null;
+    return deadline != null ? deadline.millisecondsSinceEpoch ~/ 1000 : null;
   }
 
   set isCompleted1(int isComplted1) {
@@ -95,6 +99,7 @@ class Task {
       'description' : description,
       'deadline' : deadlineInSeconds,
       'isCompleted' : isCompleted==null ? null : (isCompleted ? 1 : 0),
+      'parentTaskId' : parentId,
     };
 
     map.removeWhere((key, value) => value == null);

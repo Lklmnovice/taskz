@@ -1,26 +1,27 @@
 import 'package:flutter/foundation.dart';
 import 'package:taskz/custom_widgets/tag.dart';
-import 'package:taskz/locator.dart';
 import 'package:taskz/model/data/label.dart';
+import 'package:taskz/services/database_provider.dart';
+import 'package:taskz/services/locator.dart';
 
-import '../database_provider.dart';
-import 'package:taskz/database_provider.dart';
+
 
 class LabelModel extends ChangeNotifier {
+  LabelModel()
+      : _items={},
+        dbProvider = locator<DatabaseProvider>();
+
+
   final DatabaseProvider dbProvider;
   final Map<int,Label> _items;
 
 
-  LabelModel()
-      : _items={},
-      dbProvider = locator<DatabaseProvider>() { //service injection
-    _initializeLabels();
-  }
+
+
 
   Iterable<Label> get labels => _items.values;
 
-
-  void insertLabel(String description, int colorValue) async{
+  void insertLabel(String description, int colorValue) async {
     var label = Label(description, colorValue: colorValue);
     var id = await dbProvider.insertLabel(label);
 
@@ -39,7 +40,6 @@ class LabelModel extends ChangeNotifier {
   }
 
 
-  //todo implement this method
   void updateByID(int id, String description, int colorValue) async {
     var label = Label(description, id: id, colorValue: colorValue);
 
@@ -56,11 +56,11 @@ class LabelModel extends ChangeNotifier {
     notifyListeners();
   }
 
-
-  Future<void> _initializeLabels() async {
+  /// Retrieves data from database
+  /// Reserved to [locator]
+  Future<void> initialize() async {
       final labels = await dbProvider.labels;
       labels.forEach((label) { _items[label.id] = label; });
-
       notifyListeners();
   }
 

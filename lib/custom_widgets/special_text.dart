@@ -3,7 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:taskz/custom_widgets/tag_selection_panel.dart';
-import 'package:taskz/locator.dart';
+import 'file:///C:/Users/lenovo/Desktop/projects/dart/taskz/lib/services/locator.dart';
 import 'package:taskz/model/label_model.dart';
 
 abstract class CustomSpecialText extends SpecialText {
@@ -136,7 +136,6 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
         //there can only be one selection panel at time
         if (!_isPanelOn) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            print('pushed');
             showTagsSelectionPanel(
                 node: focusNode,
                 key: textFieldKey,
@@ -145,7 +144,6 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
                 notifier: _notifier..value = specialText.content
             ).then((String label) {
               if (label != null) {
-                print('do some work');
                 var str = data.substring(0, (specialText as TaggedText).start + 1)
                     + label + ' ';
                 controller.text = str;
@@ -206,10 +204,8 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
   maybePopSelectionPanel() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_isPanelOn) {
-        print('try to pop');
         Navigator.of(_context,).popUntil((route) {
           var name = route.settings.name;
-          print(name);
 
           return name == '/add_task';
         });

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
+import 'package:taskz/custom_widgets/custom_reorderable_listview.dart';
 import 'package:taskz/custom_widgets/tile.dart';
 import 'package:taskz/model/data/task.dart';
 import 'package:taskz/model/task_model.dart';
 
-import '../locator.dart';
+import '../services/locator.dart';
 
 class CustomList extends StatefulWidget {
   @override
@@ -14,6 +15,7 @@ class CustomList extends StatefulWidget {
 
 class _CustomListState extends State<CustomList> {
   List<Task> todos;
+  ScrollController _controller = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -27,14 +29,14 @@ class _CustomListState extends State<CustomList> {
               child: Consumer<TaskModel>(
                 builder: (context, model, child) {
                   final todos = model.tasks;
-                  return ListView.separated(
-                    itemCount: todos.length,
-                    itemBuilder: (context, index) {
-                      return buildTile(context, todos[index], true);
-                    },
-                    separatorBuilder: (context, index) => SizedBox(
-                      height: 16,
-                    ),
+                  print(todos.map((e) => e.id).toList());
+                  return CustomReorderableListView(
+                    scrollController: _controller,
+                    children: <Widget>[
+                      for (final task in todos)
+                        buildTile(context, task, true)
+                    ],
+                    onReorder: model.updateTaskOrder,
                   );
                 },
               ),
@@ -51,9 +53,15 @@ class _CustomListState extends State<CustomList> {
     ];
 
     return CustomTile(
+      key: ValueKey(task.id),
       task: task,
       subTasks: subTasks,
       isParent: isParent,
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
   }
 }

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:taskz/custom_widgets/extended_form_text_field.dart';
 import 'package:taskz/custom_widgets/special_text.dart';
-import 'package:taskz/locator.dart';
+import 'file:///C:/Users/lenovo/Desktop/projects/dart/taskz/lib/services/locator.dart';
 import 'package:taskz/model/task_model.dart';
 
 class AddTaskPage extends StatefulWidget {
@@ -41,7 +41,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
       onTap: () => _onWillPop(context, controller).then<void>((value) {
         if (value) {
           Navigator.of(context).pop(true);
-        };
+        }
       }),
       child: Scaffold(
         backgroundColor: Colors.grey[600].withOpacity(0.8),
@@ -82,6 +82,7 @@ class __AddTaskState extends State<_AddTask> {
 
   @override
   Widget build(BuildContext context) {
+    var posBefore = (ModalRoute.of(context).settings.arguments ?? -1) as int;
     final builder = MySpecialTextSpanBuilder(
         context,
         _focusNode,
@@ -159,8 +160,9 @@ class __AddTaskState extends State<_AddTask> {
                       if (_formKey.currentState.validate()) {
                         String desc = widget.textController.text;
                         var ids = builder.labelIds;
-
-                        locator<TaskModel>().insertTask(desc, _datetime, ids, null);
+                        locator<TaskModel>().insertTask(desc, _datetime, ids, null, posBefore);
+                        //todo: update UI so user know whether a new task is successfully added
+                        _formKey.currentState.reset();
                       }
                     },
                   ),
