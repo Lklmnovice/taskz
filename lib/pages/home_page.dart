@@ -7,26 +7,32 @@ import 'package:taskz/custom_widgets/custom_reorderable_listview.dart';
 import 'package:taskz/custom_widgets/tile.dart';
 import 'package:taskz/model/data/task.dart';
 import 'package:taskz/model/task_model.dart';
+import 'package:taskz/pages/add_task.dart';
+import 'package:taskz/pages/drawer.dart';
+import 'package:taskz/services/locator.dart';
 import 'package:taskz/services/time_util.dart';
 import '../extended_color_scheme.dart';
-import 'file:///C:/Users/lenovo/Desktop/projects/dart/taskz/lib/services/locator.dart';
 
 const APPBAR_HEIGHT = 56.0;
 const MAIN_MARGIN = 24.0;
 
 class HomePage extends StatelessWidget {
-  static final pageRoute = '/home_page';
+  static final pageRoute = '/';
   final _backdropKey = GlobalKey<__BackDropState>();
   final _dfabKey = GlobalKey<DraggableFloatingActionButtonState>();
+  final _drawerKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _drawerKey,
+      endDrawer: CustomDrawer(),
       floatingActionButton: DraggableFloatingActionButton(
         key: _dfabKey,
         floatingActionButton: FloatingActionButton(
             onPressed: () {
-              Navigator.of(context).pushNamed('/add_task');
+              // Navigator.of(context).pushNamed('/add_task');
+              showAddTaskPanel(context);
             },
             backgroundColor: Theme.of(context).colorScheme.error,
             foregroundColor: Theme.of(context).colorScheme.secondary,
@@ -37,7 +43,7 @@ class HomePage extends StatelessWidget {
           _BackDrop(key: _backdropKey),
           CustomScrollView(
             slivers: <Widget>[
-              DailyInfoAppBar(backdropKey: _backdropKey),
+              DailyInfoAppBar(backdropKey: _backdropKey, drawerKey: _drawerKey),
               TaskList()
             ],
           ),
@@ -49,8 +55,8 @@ class HomePage extends StatelessWidget {
 
 class DailyInfoAppBar extends StatefulWidget {
   final Key backdropKey;
-
-  DailyInfoAppBar({this.backdropKey});
+  final Key drawerKey;
+  DailyInfoAppBar({this.backdropKey, this.drawerKey});
 
   @override
   _DailyInfoAppBarState createState() => _DailyInfoAppBarState();
@@ -63,13 +69,15 @@ class _DailyInfoAppBarState extends State<DailyInfoAppBar> {
       pinned: true,
       floating: false,
       delegate: _DailyInfoAppBarDelegate(
-          context: context, backdropKey: widget.backdropKey),
+          context: context,
+          backdropKey: widget.backdropKey,
+          drawerKey: widget.drawerKey),
     );
   }
 }
 
 class _DailyInfoAppBarDelegate implements SliverPersistentHeaderDelegate {
-  _DailyInfoAppBarDelegate({this.context, this.backdropKey})
+  _DailyInfoAppBarDelegate({this.context, this.backdropKey, this.drawerKey})
       : topPadding = MediaQuery.of(context).padding.top,
         _tweenHeader = TextStyleTween(
             begin: const TextStyle(color: Colors.white, fontSize: 16),
@@ -97,6 +105,7 @@ class _DailyInfoAppBarDelegate implements SliverPersistentHeaderDelegate {
   final EdgeInsetsTween _tweenPadding;
   final Tween<Offset> _tweenShift;
   final GlobalKey<__BackDropState> backdropKey;
+  final GlobalKey<ScaffoldState> drawerKey;
 
   @override
   Widget build(
@@ -118,7 +127,11 @@ class _DailyInfoAppBarDelegate implements SliverPersistentHeaderDelegate {
           shape: ContinuousRectangleBorder(
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(6))),
           actions: <Widget>[
-            IconButton(onPressed: () {}, icon: Icon(Icons.menu))
+            IconButton(
+                onPressed: () {
+                  drawerKey.currentState.openEndDrawer();
+                },
+                icon: Icon(Icons.menu))
           ],
         ),
       Padding(
@@ -181,6 +194,8 @@ class TodayProgressIndicator extends StatelessWidget {
         final model = snapshot.hasData ? locator<TaskModel>() : null;
         int uncompleted = snapshot.hasData ? model.tasks.length : 0;
         int total = snapshot.hasData ? model.nTodayTask : 0;
+        //todo fix the bug
+        if (total == 0) total = 1;
         double value = snapshot.hasData ? (total - uncompleted) / total : 1;
 
         print(
@@ -288,12 +303,12 @@ class _TaskListState extends State<TaskList> {
     );
   }
 
-  CustomTile buildTile(BuildContext context, Task task, bool isParent) {
-    List<CustomTile> subTasks = [
+  TaskWidget buildTile(BuildContext context, Task task, bool isParent) {
+    List<TaskWidget> subTasks = [
       for (var t in task.subTask) buildTile(context, t, false)
     ];
 
-    return CustomTile(
+    return TaskWidget(
       key: ValueKey(task.id),
       task: task,
       subTasks: subTasks,

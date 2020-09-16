@@ -1,71 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:taskz/custom_widgets/extended_form_text_field.dart';
 import 'package:taskz/custom_widgets/special_text.dart';
-import 'file:///C:/Users/lenovo/Desktop/projects/dart/taskz/lib/services/locator.dart';
 import 'package:taskz/model/task_model.dart';
-
-class AddTaskPage extends StatefulWidget {
-  @override
-  _AddTaskPageState createState() => _AddTaskPageState();
-
-  static const _months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dic'
-  ];
-}
-
-class _AddTaskPageState extends State<AddTaskPage> {
-  final TextEditingController controller = TextEditingController();
-
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _onWillPop(context, controller).then<void>((value) {
-        if (value) {
-          Navigator.of(context).pop(true);
-        }
-      }),
-      child: Scaffold(
-        backgroundColor: Colors.grey[600].withOpacity(0.8),
-        body: Stack(
-          children: <Widget>[
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _AddTask(textController: controller),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
+import 'package:taskz/services/locator.dart';
 
 class _AddTask extends StatefulWidget {
-  final TextEditingController textController;
-
-  _AddTask({this.textController});
+  _AddTask();
 
   @override
   __AddTaskState createState() => __AddTaskState();
@@ -74,20 +14,16 @@ class _AddTask extends StatefulWidget {
 class __AddTaskState extends State<_AddTask> {
   final _formKey = GlobalKey<FormState>();
   final _textFieldKey = GlobalKey();
-  final FocusNode _focusNode = FocusNode();
+  final FocusNode _focusNode = FocusNode()..requestFocus();
+  final TextEditingController textController = TextEditingController();
 
   var _datetime = DateTime.now();
-
-
 
   @override
   Widget build(BuildContext context) {
     var posBefore = (ModalRoute.of(context).settings.arguments ?? -1) as int;
     final builder = MySpecialTextSpanBuilder(
-        context,
-        _focusNode,
-        _textFieldKey,
-        widget.textController..clear());
+        context, _focusNode, _textFieldKey, textController);
 
     return Container(
       decoration: BoxDecoration(
@@ -98,78 +34,80 @@ class __AddTaskState extends State<_AddTask> {
       child: Form(
         key: _formKey,
         onWillPop: () async {
-          return await _onWillPop(context, widget.textController);
+          return await _onWillPop(context, textController).then((value) {
+            if (!value) _focusNode.requestFocus();
+            return value;
+          });
         },
-        child: IntrinsicHeight(
-          child: Column(
-            children: <Widget>[
-              ExtendedTextFormField(
-                key: _textFieldKey,
-                specialTextSpanBuilder: builder,
-                focusNode: _focusNode..requestFocus(),
-                textInputAction: TextInputAction.send,
-                validator: (value) {
-                  return value.isEmpty ? 'empty string' : null;
-                },
-                controller: widget.textController,
-                keyboardType: TextInputType.multiline,
-                maxLines: null,
-                decoration: InputDecoration(
-                  labelText: 'Enter a new task',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ExtendedTextFormField(
+              key: _textFieldKey,
+              specialTextSpanBuilder: builder,
+              focusNode: _focusNode,
+              textInputAction: TextInputAction.send,
+              validator: (value) {
+                return value.isEmpty ? 'empty string' : null;
+              },
+              controller: textController,
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
+              decoration: InputDecoration(
+                labelText: 'Enter a new task',
+              ),
+            ),
+            SizedBox(
+              height: 16,
+            ),
+            Row(
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(Icons.label),
+                  onPressed: () =>
+                      textController.text = textController.text + '@',
                 ),
-              ),
-              SizedBox(
-                height: 16,
-              ),
-              Row(
-                children: <Widget>[
-                  IconButton(
-                    icon: Icon(Icons.label),
-                    onPressed: () =>
-                      widget.textController.text = widget.textController.text + '@',
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.flag),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.description),
-                  ),
-                  Spacer(
-                    flex: 5,
-                  ),
-                  //todo extract this as widget
-                  OutlineButton.icon(
-                      onPressed: () {
-                        showDatePicker(
-                            context: context,
-                            initialDate: _datetime,
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(Duration(days: 366))
-                        ).then((value) {
-                          setState(() {
-                            if (value != null)
-                              _datetime = value;
-                          });
-                        });
-                      },
-                      icon: Icon(Icons.book),
-                      label: Text(_formatDateTime(_datetime))),
-                  IconButton(
-                    icon: Icon(Icons.send),
+                IconButton(
+                  icon: Icon(Icons.flag),
+                ),
+                IconButton(
+                  icon: Icon(Icons.description),
+                ),
+                Spacer(
+                  flex: 5,
+                ),
+                //todo extract this as widget
+                OutlineButton.icon(
                     onPressed: () {
-                      if (_formKey.currentState.validate()) {
-                        String desc = widget.textController.text;
-                        var ids = builder.labelIds;
-                        locator<TaskModel>().insertTask(desc, _datetime, ids, null, posBefore);
-                        //todo: update UI so user know whether a new task is successfully added
-                        _formKey.currentState.reset();
-                      }
+                      showDatePicker(
+                              context: context,
+                              initialDate: _datetime,
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(Duration(days: 366)))
+                          .then((value) {
+                        setState(() {
+                          if (value != null) _datetime = value;
+                        });
+                      });
                     },
-                  ),
-                ],
-              ),
-            ],
-          ),
+                    icon: Icon(Icons.book),
+                    label: Text(_formatDateTime(_datetime))),
+                IconButton(
+                  icon: Icon(Icons.send),
+                  onPressed: () {
+                    if (_formKey.currentState.validate()) {
+                      String desc = textController.text;
+                      var ids = builder.labelIds;
+                      locator<TaskModel>()
+                          .insertTask(desc, _datetime, ids, null, posBefore);
+                      //todo: update UI so user know whether a new task is successfully added
+                      _formKey.currentState.reset();
+                    }
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -177,23 +115,37 @@ class __AddTaskState extends State<_AddTask> {
 
   @override
   void dispose() {
+    textController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
   String _formatDateTime(DateTime dateTime) {
     return dateTime.day.toString().padLeft(2, '0') +
-        AddTaskPage._months[dateTime.month - 1];
+        [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dic'
+        ][dateTime.month - 1];
   }
 
-}
-
-
-Future<bool> _onWillPop(BuildContext context, TextEditingController _textController) async {
-  if (_textController.text.isNotEmpty)
-    return await _showAlertDialog(context);
-  else
-    return true;
+  Future<bool> _onWillPop(
+      BuildContext context, TextEditingController _textController) async {
+    if (_textController.text.isNotEmpty) {
+      _focusNode.unfocus();
+      return await _showAlertDialog(context);
+    } else
+      return true;
+  }
 }
 
 Future<bool> _showAlertDialog(BuildContext context) async {
@@ -219,5 +171,19 @@ Future<bool> _showAlertDialog(BuildContext context) async {
         ],
       );
     },
+  );
+}
+
+void showAddTaskPanel(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: ContinuousRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+    builder: (context) => Container(
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: _AddTask(),
+    ),
   );
 }

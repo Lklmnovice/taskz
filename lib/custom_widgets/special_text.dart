@@ -1,7 +1,6 @@
 import 'package:extended_text_field/extended_text_field.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:taskz/custom_widgets/tag_selection_panel.dart';
 import 'file:///C:/Users/lenovo/Desktop/projects/dart/taskz/lib/services/locator.dart';
 import 'package:taskz/model/label_model.dart';
@@ -10,29 +9,22 @@ abstract class CustomSpecialText extends SpecialText {
   final int start;
 
   CustomSpecialText(
-      String startFlag,
-      String endFlag,
-      this.start,
-      TextStyle textStyle,
-      { SpecialTextGestureTapCallback onTap})
-  : super(startFlag, endFlag, textStyle, onTap:onTap);
+      String startFlag, String endFlag, this.start, TextStyle textStyle,
+      {SpecialTextGestureTapCallback onTap})
+      : super(startFlag, endFlag, textStyle, onTap: onTap);
 
   bool isValidText();
 
   get content => super.getContent();
 }
 
-
 class TaggedText extends CustomSpecialText {
   static const String flag = "@";
   int labelId = -1;
 
-  TaggedText({
-    int start,
-    TextStyle textStyle,
-    SpecialTextGestureTapCallback onTap
-  }): super(flag, ' ', start, textStyle, onTap: onTap);
-
+  TaggedText(
+      {int start, TextStyle textStyle, SpecialTextGestureTapCallback onTap})
+      : super(flag, ' ', start, textStyle, onTap: onTap);
 
   @override
   InlineSpan finishText() {
@@ -55,9 +47,10 @@ class TaggedText extends CustomSpecialText {
   @override
   bool isValidText() {
     //description is unique
-    final list = locator<LabelModel>().labels
-      .where((e) => e.description == content)
-      .toList(growable: false);
+    final list = locator<LabelModel>()
+        .labels
+        .where((e) => e.description == content)
+        .toList(growable: false);
 
     if (list.isEmpty)
       return false;
@@ -66,10 +59,7 @@ class TaggedText extends CustomSpecialText {
       return true;
     }
   }
-
-
 }
-
 
 class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
   /// whether show background for @somebody
@@ -81,11 +71,10 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
   final ValueNotifier<String> _notifier;
   final TextEditingController controller;
 
-  MySpecialTextSpanBuilder(this._context, this.focusNode, this.textFieldKey, this.controller)
-  : _notifier = ValueNotifier<String>(''),
-    _isPanelOn = false;
-
-
+  MySpecialTextSpanBuilder(
+      this._context, this.focusNode, this.textFieldKey, this.controller)
+      : _notifier = ValueNotifier<String>(''),
+        _isPanelOn = false;
 
   @override
   TextSpan build(String data, {TextStyle textStyle, onTap}) {
@@ -93,7 +82,6 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
       maybePopSelectionPanel();
       return null;
     }
-
 
     final List<InlineSpan> inlineList = <InlineSpan>[];
     if (data.isNotEmpty) {
@@ -107,7 +95,8 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
         if (specialText != null) {
           if (!specialText.isEnd(textBuffer)) {
             specialText.appendContent(char);
-          } else { //possible specialtext is ready
+          } else {
+            //possible specialtext is ready
             if (specialText.isValidText()) {
               inlineList.add(specialText.finishText());
               textBuffer = '';
@@ -137,23 +126,27 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
         if (!_isPanelOn) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             showTagsSelectionPanel(
-                node: focusNode,
-                key: textFieldKey,
-                fullText: data,
-                context: _context,
-                notifier: _notifier..value = specialText.content
-            ).then((String label) {
+                    node: focusNode,
+                    key: textFieldKey,
+                    fullText: data,
+                    context: _context,
+                    notifier: _notifier..value = specialText.content)
+                .then((String label) {
               if (label != null) {
-                var str = data.substring(0, (specialText as TaggedText).start + 1)
-                    + label + ' ';
+                var str =
+                    data.substring(0, (specialText as TaggedText).start + 1) +
+                        label +
+                        ' ';
                 controller.text = str;
-                controller.selection = TextSelection.collapsed(offset: str.length);
+                controller.selection =
+                    TextSelection.collapsed(offset: str.length);
               } else
                 print('null detected');
             });
             _isPanelOn = true;
           });
-        } else { //otherwise, we update the value
+        } else {
+          //otherwise, we update the value
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _notifier.value = specialText.content;
           });
@@ -167,14 +160,14 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
         }
         maybePopSelectionPanel();
       }
-    } else {//data is empty
+    } else {
+      //data is empty
       maybePopSelectionPanel();
       inlineList.add(TextSpan(text: data, style: textStyle));
     }
 
     return TextSpan(children: inlineList, style: textStyle);
   }
-
 
   List<int> get labelIds {
     final text = controller.text;
@@ -195,7 +188,7 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
     if (isStart(textBuffer, TaggedText.flag)) {
       return TaggedText(
           textStyle: textStyle,
-          onTap:  onTap,
+          onTap: onTap,
           start: index - (TaggedText.flag.length - 1));
     }
     return null;
@@ -204,16 +197,15 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
   maybePopSelectionPanel() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_isPanelOn) {
-        Navigator.of(_context,).popUntil((route) {
+        Navigator.of(
+          _context,
+        ).popUntil((route) {
           var name = route.settings.name;
-
           return name == '/add_task';
         });
+
         _isPanelOn = false;
       }
-     });
+    });
   }
-
-
 }
-

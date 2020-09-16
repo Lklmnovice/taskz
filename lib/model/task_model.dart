@@ -10,24 +10,22 @@ import 'data/task.dart';
 
 class TaskModel extends ChangeNotifier {
   TaskModel()
-      : _items={},
+      : _items = {},
         dbProvider = locator<DatabaseProvider>();
 
-
   final DatabaseProvider dbProvider;
-  final Map<int,Task> _items;         //contains every single item
-  List<int> _topItemsOrder;           //only top-level items
+  final Map<int, Task> _items; //contains every single item
+  List<int> _topItemsOrder; //only top-level items
   int nTodayTask;
 
   final String _todayStr = 'DATE';
   final String _tasksOrderStr = 'TASKS_ORDER';
   final String _nTodayTaskStr = 'TASKS_NUM';
 
-
   /// Gets a list of top-level tasks
   List<Task> get tasks {
     return List.generate(_topItemsOrder.length, (index) {
-      return _items[ _topItemsOrder[index] ];
+      return _items[_topItemsOrder[index]];
     });
   }
 
@@ -38,13 +36,13 @@ class TaskModel extends ChangeNotifier {
   /// Both of them will be handled by [DatabaseProvider.insertTask]
   /// [posBefore] defines the position where the task will be inserted
   void insertTask(
-      String description,
-      DateTime deadline,
-      List<int> labelIds,
-      int parentId,
-      [int posBefore = -1]
-      ) async {
-    Task task = Task(description, labelIds: labelIds, deadline: deadline,);
+      String description, DateTime deadline, List<int> labelIds, int parentId,
+      [int posBefore = -1]) async {
+    Task task = Task(
+      description,
+      labelIds: labelIds,
+      deadline: deadline,
+    );
     var id = await dbProvider.insertTask(task, parentId);
     task.id = id;
     _items[id] = task;
@@ -61,7 +59,6 @@ class TaskModel extends ChangeNotifier {
     notifyListeners();
   }
 
-
   void updateTask() {}
 
   /// Completes a task
@@ -73,8 +70,8 @@ class TaskModel extends ChangeNotifier {
     //complete the task and its subtasks
     var parentTaskId = _items[id].parentId;
     var tempSubTasks = parentTaskId != null
-        ? List<Task>.from(_items[parentTaskId]?.subTask ?? [])
-        : [],
+            ? List<Task>.from(_items[parentTaskId]?.subTask ?? [])
+            : [],
         tempTopItemsOrder = List<int>.from(_topItemsOrder);
     var isAmongTopItems = false;
     if (_topItemsOrder.contains(id)) {
@@ -86,14 +83,21 @@ class TaskModel extends ChangeNotifier {
     notifyListeners();
 
     final sfld = Scaffold.of(context);
-    sfld.showSnackBar(SnackBar(
-      content: Text('A task has been deleted'),
-      action: SnackBarAction(
-        label: 'Undo',
-        onPressed: () { sfld.hideCurrentSnackBar(); print('todo pressed');},
-      ),
-    )).closed.then((SnackBarClosedReason reason) async {
-      if (reason == SnackBarClosedReason.action) { // revoke the operation
+    sfld
+        .showSnackBar(SnackBar(
+          content: Text('A task has been deleted'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () {
+              sfld.hideCurrentSnackBar();
+              print('todo pressed');
+            },
+          ),
+        ))
+        .closed
+        .then((SnackBarClosedReason reason) async {
+      if (reason == SnackBarClosedReason.action) {
+        // revoke the operation
         if (isAmongTopItems) {
           _topItemsOrder = tempTopItemsOrder;
           _saveTasksOrder();
@@ -105,10 +109,9 @@ class TaskModel extends ChangeNotifier {
     });
   }
 
-  //todo reordering subtasks 
+  //todo reordering subtasks
   void updateTaskOrder(int oldIndex, int newIndex) {
-    if (oldIndex < newIndex)
-      newIndex -= 1;
+    if (oldIndex < newIndex) newIndex -= 1;
     final i = _topItemsOrder.removeAt(oldIndex);
     _topItemsOrder.insert(newIndex, i);
     _saveTasksOrder();
@@ -124,6 +127,7 @@ class TaskModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString(_tasksOrderStr, jsonEncode(_topItemsOrder));
   }
+
   /// initialize today's tasks
   /// Reserved to [locator]
   ///
@@ -149,6 +153,7 @@ class TaskModel extends ChangeNotifier {
       nTodayTask = prefs.getInt(_nTodayTaskStr);
     } else {
       _topItemsOrder = topLevelTasks.map((task) => task.id).toList();
+      nTodayTask = _topItemsOrder.length;
       var json = jsonEncode(_topItemsOrder);
       prefs.setString(_tasksOrderStr, json);
       prefs.setString(_todayStr, _formatDDMMYYYY(time));

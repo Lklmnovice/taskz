@@ -7,13 +7,13 @@ import 'package:taskz/model/data/task.dart';
 import 'package:taskz/model/task_model.dart';
 import 'package:taskz/services/locator.dart';
 
-class CustomTile extends StatelessWidget {
+class TaskWidget extends StatelessWidget {
   final Key key;
-  final List<CustomTile> subTasks;
+  final List<TaskWidget> subTasks;
   final Task task;
   final bool isParent;
 
-  CustomTile(
+  TaskWidget(
       {this.key,
       @required this.task,
       @required this.subTasks,
@@ -31,38 +31,41 @@ class CustomTile extends StatelessWidget {
                 borderRadius: BorderRadius.all(Radius.circular(12)))
             : null,
         elevation: isParent ? 4 : 0,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            _CustomTileContent(
-              isParent: isParent,
-              task: task,
-            ),
-            if (subTasks.isNotEmpty)
-              Padding(
-                padding: EdgeInsets.only(left: 24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: subTasks,
-                ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              _TaskContentTile(
+                isParent: isParent,
+                task: task,
               ),
-          ],
+              if (subTasks.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.only(left: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: subTasks,
+                  ),
+                ),
+            ],
+          ),
         ));
   }
 }
 
-class _CustomTileContent extends StatefulWidget {
+class _TaskContentTile extends StatefulWidget {
   final Task task;
   final bool isParent;
 
-  _CustomTileContent({@required this.task, @required this.isParent});
+  _TaskContentTile({@required this.task, @required this.isParent});
 
   @override
-  _CustomTileContentState createState() => _CustomTileContentState();
+  _TaskContentTileState createState() => _TaskContentTileState();
 }
 
-class _CustomTileContentState extends State<_CustomTileContent> {
+class _TaskContentTileState extends State<_TaskContentTile> {
   bool state = false;
 
   @override
