@@ -1,4 +1,5 @@
-import 'package:extended_text_field/extended_text_field.dart' hide InputCounterWidgetBuilder;
+import 'package:extended_text_field/extended_text_field.dart'
+    hide InputCounterWidgetBuilder;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,8 +7,7 @@ import 'dart:ui' as ui;
 
 //todo: fix searching algo
 class ExtendedTextFormField extends FormField<String> {
-
-  ExtendedTextFormField ({
+  ExtendedTextFormField({
     Key key,
     this.controller,
     this.focusNode,
@@ -38,7 +38,7 @@ class ExtendedTextFormField extends FormField<String> {
     this.onEditingComplete,
     this.onSubmitted,
     this.inputFormatters,
-    this.enabled=true,
+    this.enabled = true,
     this.cursorWidth = 2.0,
     this.cursorRadius,
     this.cursorColor,
@@ -54,15 +54,12 @@ class ExtendedTextFormField extends FormField<String> {
     this.scrollPhysics,
     this.specialTextSpanBuilder,
     this.textSelectionControls,
-
     ValueChanged<String> onFieldSubmitted,
     FormFieldSetter<String> onSaved,
     FormFieldValidator<String> validator,
     String initialValue,
     bool autovalidate = false,
-
-  })
-  : assert(textAlign != null),
+  })  : assert(textAlign != null),
         assert(readOnly != null),
         assert(autofocus != null),
         assert(obscureText != null),
@@ -81,16 +78,16 @@ class ExtendedTextFormField extends FormField<String> {
         assert(maxLines == null || maxLines > 0),
         assert(minLines == null || minLines > 0),
         assert(
-        (maxLines == null) || (minLines == null) || (maxLines >= minLines),
-        'minLines can\'t be greater than maxLines',
+          (maxLines == null) || (minLines == null) || (maxLines >= minLines),
+          'minLines can\'t be greater than maxLines',
         ),
         assert(expands != null),
         assert(
-        !expands || (maxLines == null && minLines == null),
-        'minLines and maxLines must be null when expands is true.',
+          !expands || (maxLines == null && minLines == null),
+          'minLines and maxLines must be null when expands is true.',
         ),
         assert(!obscureText || maxLines == 1,
-        'Obscured fields cannot be multiline.'),
+            'Obscured fields cannot be multiline.'),
         assert(maxLength == null ||
             maxLength == TextField.noMaxLength ||
             maxLength > 0),
@@ -99,76 +96,82 @@ class ExtendedTextFormField extends FormField<String> {
         toolbarOptions = toolbarOptions ??
             (obscureText
                 ? const ToolbarOptions(
-              selectAll: true,
-              paste: true,
-            )
+                    selectAll: true,
+                    paste: true,
+                  )
                 : const ToolbarOptions(
-              copy: true,
-              cut: true,
-              selectAll: true,
-              paste: true,
-            )),
+                    copy: true,
+                    cut: true,
+                    selectAll: true,
+                    paste: true,
+                  )),
         super(
-        onSaved: onSaved,
-        validator: validator,
-        initialValue: initialValue,
-        enabled: enabled,
-        autovalidate: autovalidate,
-        builder: (FormFieldState<String> field) {
-          final _TextFormFieldState state = field as _TextFormFieldState;
-          final InputDecoration effectiveDecoration = (decoration ?? const InputDecoration())
-              .applyDefaults(Theme.of(field.context).inputDecorationTheme);
-          void onChangedHandler(String value) {
-            if (onChanged != null) {
-              onChanged(value);
-            }
-            field.didChange(value);
-          }
-
-          return ExtendedTextField(
-            specialTextSpanBuilder: specialTextSpanBuilder,
-            controller: controller,
-            focusNode: focusNode,
-            decoration: effectiveDecoration.copyWith(errorText: field.errorText),
-            keyboardType: keyboardType,
-            textInputAction: textInputAction,
-            style: style,
-            strutStyle: strutStyle,
-            textAlign: textAlign,
-            textAlignVertical: textAlignVertical,
-            textDirection: textDirection,
-            textCapitalization: textCapitalization,
-            autofocus: autofocus,
-            toolbarOptions: toolbarOptions,
-            readOnly: readOnly,
-            showCursor: showCursor,
-            obscureText: obscureText,
-            autocorrect: autocorrect,
-            smartDashesType: smartDashesType ?? (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
-            smartQuotesType: smartQuotesType ?? (obscureText ? SmartQuotesType.disabled : SmartQuotesType.enabled),
-            enableSuggestions: enableSuggestions,
-            maxLengthEnforced: maxLengthEnforced,
-            maxLines: maxLines,
-            minLines: minLines,
-            expands: expands,
-            maxLength: maxLength,
-            onChanged: onChangedHandler,
-            onTap: onTap,
-            onEditingComplete: onEditingComplete,
-            onSubmitted: onFieldSubmitted,
-            inputFormatters: inputFormatters,
+            onSaved: onSaved,
+            validator: validator,
+            initialValue: initialValue,
             enabled: enabled,
-            cursorWidth: cursorWidth,
-            cursorRadius: cursorRadius,
-            cursorColor: cursorColor,
-            scrollPadding: scrollPadding,
-            scrollPhysics: scrollPhysics,
-            keyboardAppearance: keyboardAppearance,
-            enableInteractiveSelection: enableInteractiveSelection,
-            buildCounter: buildCounter,
-          );
-        }
-      );
+            autovalidate: autovalidate,
+            builder: (FormFieldState<String> field) {
+              final InputDecoration effectiveDecoration = (decoration ??
+                      const InputDecoration())
+                  .applyDefaults(Theme.of(field.context).inputDecorationTheme);
+              void onChangedHandler(String value) {
+                if (onChanged != null) {
+                  onChanged(value);
+                }
+                field.didChange(value);
+              }
+
+              return ExtendedTextField(
+                specialTextSpanBuilder: specialTextSpanBuilder,
+                controller: controller,
+                focusNode: focusNode,
+                decoration:
+                    effectiveDecoration.copyWith(errorText: field.errorText),
+                keyboardType: keyboardType,
+                textInputAction: textInputAction,
+                style: style,
+                strutStyle: strutStyle,
+                textAlign: textAlign,
+                textAlignVertical: textAlignVertical,
+                textDirection: textDirection,
+                textCapitalization: textCapitalization,
+                autofocus: autofocus,
+                toolbarOptions: toolbarOptions,
+                readOnly: readOnly,
+                showCursor: showCursor,
+                obscureText: obscureText,
+                autocorrect: autocorrect,
+                smartDashesType: smartDashesType ??
+                    (obscureText
+                        ? SmartDashesType.disabled
+                        : SmartDashesType.enabled),
+                smartQuotesType: smartQuotesType ??
+                    (obscureText
+                        ? SmartQuotesType.disabled
+                        : SmartQuotesType.enabled),
+                enableSuggestions: enableSuggestions,
+                maxLengthEnforced: maxLengthEnforced,
+                maxLines: maxLines,
+                minLines: minLines,
+                expands: expands,
+                maxLength: maxLength,
+                onChanged: onChangedHandler,
+                onTap: onTap,
+                onEditingComplete: onEditingComplete,
+                onSubmitted: onFieldSubmitted,
+                inputFormatters: inputFormatters,
+                enabled: enabled,
+                cursorWidth: cursorWidth,
+                cursorRadius: cursorRadius,
+                cursorColor: cursorColor,
+                scrollPadding: scrollPadding,
+                scrollPhysics: scrollPhysics,
+                keyboardAppearance: keyboardAppearance,
+                enableInteractiveSelection: enableInteractiveSelection,
+                buildCounter: buildCounter,
+              );
+            });
 
   /// An interface for building the selection UI, to be provided by the
   /// implementor of the toolbar widget or handle widget
@@ -494,22 +497,22 @@ class ExtendedTextFormField extends FormField<String> {
   /// be created at all.
 
   final InputCounterWidgetBuilder buildCounter;
+
   /// {@macro flutter.widgets.edtiableText.scrollPhysics}
   final ScrollPhysics scrollPhysics;
 
   /// {@macro flutter.widgets.editableText.scrollController}
   final ScrollController scrollController;
 
-
   @override
   _TextFormFieldState createState() => _TextFormFieldState();
 }
 
-
 class _TextFormFieldState extends FormFieldState<String> {
   TextEditingController _controller;
 
-  TextEditingController get _effectiveController => widget.controller ?? _controller;
+  TextEditingController get _effectiveController =>
+      widget.controller ?? _controller;
 
   @override
   ExtendedTextFormField get widget => super.widget as ExtendedTextFormField;
@@ -532,11 +535,11 @@ class _TextFormFieldState extends FormFieldState<String> {
       widget.controller?.addListener(_handleControllerChanged);
 
       if (oldWidget.controller != null && widget.controller == null)
-        _controller = TextEditingController.fromValue(oldWidget.controller.value);
+        _controller =
+            TextEditingController.fromValue(oldWidget.controller.value);
       if (widget.controller != null) {
         setValue(widget.controller.text);
-        if (oldWidget.controller == null)
-          _controller = null;
+        if (oldWidget.controller == null) _controller = null;
       }
     }
   }

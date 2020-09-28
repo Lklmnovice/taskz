@@ -1,4 +1,3 @@
-
 /// Label data class
 ///
 /// ```sql
@@ -9,13 +8,7 @@
 ///)
 ///```
 class Label {
-  static const kDefaultColorValue = 0xffbdbdbd;
-
-  int id;
-  String description;
-  int colorValue;
-
-  Label(this.description, {this.id, this.colorValue=kDefaultColorValue});
+  Label(this.description, {this.id, this.colorValue = kDefaultColor});
 
   factory Label.fromData(int id, String description, String color) {
     //backward compatibility
@@ -24,12 +17,21 @@ class Label {
     return Label(description, id: id, colorValue: value);
   }
 
+  static const kDefaultColor = 0xffbdbdbd;
+  static const TABLE = 'Tag';
+  static const cId = 'id';
+  static const cDescription = 'description';
+  static const cColor = 'color';
 
-  Map<String, dynamic> toMap({bool includeId=true}) {
+  int id;
+  String description;
+  int colorValue;
+
+  Map<String, dynamic> toMap({bool includeId = true}) {
     Map<String, dynamic> map = {
-      if (includeId) 'id' : id,
-      'description' : description,
-      'color' : colorValue.toRadixString(16),
+      if (includeId) 'id': id,
+      'description': description,
+      'color': colorValue.toRadixString(16),
     };
 
     map.removeWhere((key, value) => value == null);
@@ -41,4 +43,3 @@ class Label {
     return this.colorValue.toRadixString(16);
   }
 }
-

@@ -12,48 +12,57 @@
 /// ```
 ///
 class Task {
-  int id;
-  String description;
-  DateTime deadline;
-  bool isCompleted;
-  int priority;
-
-  int parentId;
-
-  List<Task> subTask=[];
-  List<int> labelIds=[];
-
-  Task(this.description, {
-    this.id,
-    this.deadline,
-    this.isCompleted=false,
-    this.priority=1,
-    this.subTask,
-    this.labelIds,
-    this.parentId}) {
-
+  Task(this.description,
+      {this.id,
+      this.deadline,
+      this.isCompleted = false,
+      this.priority = 1,
+      this.subTask,
+      this.labelIds,
+      this.parentId,
+      this.note = ''}) {
     this.subTask ??= [];
     this.labelIds ??= [];
   }
 
-  factory Task.fromData(int id, String description,
-      int seconds,
-      int isCompleted,
-      int priority,
-      [List<Task> subTask, List<int> labelIds, parentId]) {
-
-    var task = Task(
-      description,
-      id: id,
-      priority: priority,
-      subTask: subTask,
-      labelIds: labelIds,
-      parentId: parentId,
-    ) ..isCompleted1 = isCompleted
+  factory Task.fromData(
+      int id, String description, int seconds, int isCompleted, int priority,
+      [String note, List<Task> subTask, List<int> labelIds, parentId]) {
+    var task = Task(description,
+        id: id,
+        priority: priority,
+        subTask: subTask,
+        labelIds: labelIds,
+        parentId: parentId,
+        note: note ?? '')
+      ..isCompleted1 = isCompleted
       ..deadlineInSeconds = seconds;
 
     return task;
   }
+
+  static const TABLE = 'Task';
+  static const cId = 'id';
+  static const cDescription = 'description';
+  static const cDeadline = 'deadline';
+  static const cIsCompleted = 'isCompleted';
+  static const cPriority = 'priority';
+  static const cParentTaskId = 'parentTaskId';
+  static const cIndex = 'index'; //for reordering todo add index support
+  static const cNote = 'note'; //detail notes on the task
+
+  int id;
+  // descriptive data
+  String description;
+  DateTime deadline;
+  int priority;
+  String note;
+
+  List<Task> subTask = [];
+  List<int> labelIds = [];
+
+  bool isCompleted;
+  int parentId;
 
   void addTask(Task task) {
     this.subTask.add(task);
@@ -81,7 +90,6 @@ class Task {
   String toString() {
     return 'task{id=$id, description=$description, deadline=$deadline, isCompleted=$isCompleted, '
         'priority=$priority， labels={$labelIds}, subtasks={$subTask}';
-
   }
 
   @override
@@ -93,13 +101,14 @@ class Task {
   ///
   /// parentId and labelIds won't be part of the result
   /// thus, they need to be handled separately
-  Map<String, dynamic> toMap({bool includeId=true}) {
+  Map<String, dynamic> toMap({bool includeId = true}) {
     Map<String, dynamic> map = {
-      if (includeId) 'id' : id,
-      'description' : description,
-      'deadline' : deadlineInSeconds,
-      'isCompleted' : isCompleted==null ? null : (isCompleted ? 1 : 0),
-      'parentTaskId' : parentId,
+      if (includeId) 'id': id,
+      'description': description,
+      'deadline': deadlineInSeconds,
+      'isCompleted': isCompleted == null ? null : (isCompleted ? 1 : 0),
+      if (parentId != null) 'parentTaskId': parentId,
+      'note': note
     };
 
     map.removeWhere((key, value) => value == null);
@@ -107,5 +116,5 @@ class Task {
     return map;
   }
 
-
+  bool get hasParent => parentId != null && parentId != -1;
 }

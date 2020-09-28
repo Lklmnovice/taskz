@@ -5,6 +5,7 @@ import 'package:taskz/model/label_model.dart';
 import 'package:taskz/extended_color_scheme.dart';
 import 'package:taskz/pages/home_page.dart';
 import 'package:taskz/pages/upcoming_page.dart';
+import 'package:taskz/pages/add_edit_label.dart';
 
 class CustomDrawer extends StatelessWidget {
   final iconSize = 32.0;
@@ -142,8 +143,11 @@ class CustomDrawer extends StatelessWidget {
                       Icon(Icons.expand_more),
                       GestureDetector(
                           child: Icon(Icons.add),
-                          onTap: () =>
-                              Navigator.pushNamed(context, "/add_label")),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Future.delayed(Duration(milliseconds: 100),
+                                () => showUpdateTag(context));
+                          }),
                     ],
                   ),
                   leading: Icon(
@@ -167,9 +171,11 @@ class CustomDrawer extends StatelessWidget {
                           textColor: Theme.of(context).colorScheme.primary,
                           label: label,
                           iconSize: iconSize,
-                          onTap: () => Navigator.pushNamed(
-                              context, '/update_label',
-                              arguments: label))
+                          onTap: () {
+                            Navigator.pop(context);
+                            Future.delayed(Duration(milliseconds: 100),
+                                () => showUpdateTag(context, label));
+                          })
                   ],
                 );
               },

@@ -77,8 +77,6 @@ class _PopupSelectionRoute<T> extends TransitionRoute<T> {
     var _offsetDx = node.offset.dx;
     var left = _offsetDx + cursorPosition + 10;
 
-    //todo add restrictions
-//    node.offset.dy - 40 + node.size.height
     return LayoutBuilder(
       builder: (context, constraints) {
         return Stack(children: <Widget>[
@@ -130,7 +128,7 @@ class _SelectionPanelState extends State<SelectionPanel> {
               title: Text('Insert a new Label'),
               leading: Icon(Icons.add),
               onTap: () {
-                model.insertLabel(text, Label.kDefaultColorValue);
+                model.insertLabel(text, Label.kDefaultColor);
 
                 Navigator.of(
                   context,
@@ -166,7 +164,7 @@ class _SelectionPanelState extends State<SelectionPanel> {
         });
   }
 
-  //todo refactor the speacial text builder function
+  //todo refactor the special text builder function
   /// Finds labels that match user input
   /// or otherwise return an empty iterable
   Iterable<Label> _fetchMatchingLabels(LabelModel model, String text) {

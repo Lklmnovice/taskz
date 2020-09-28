@@ -123,7 +123,9 @@ class MySpecialTextSpanBuilder extends SpecialTextSpanBuilder {
 
       if (specialText != null) {
         //there can only be one selection panel at time
-        if (!_isPanelOn) {
+        if (!_isPanelOn &&
+            ModalRoute.of(_context).isCurrent &&
+            MediaQuery.of(_context).viewInsets.bottom >= 200) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             showTagsSelectionPanel(
                     node: focusNode,

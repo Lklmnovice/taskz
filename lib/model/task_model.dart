@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taskz/services/database_provider.dart';
 import 'package:taskz/services/locator.dart';
-
+import 'package:taskz/services/time_util.dart';
 import 'data/task.dart';
 
 class TaskModel extends ChangeNotifier {
@@ -14,19 +14,33 @@ class TaskModel extends ChangeNotifier {
         dbProvider = locator<DatabaseProvider>();
 
   final DatabaseProvider dbProvider;
-  final Map<int, Task> _items; //contains every single item
-  List<int> _topItemsOrder; //only top-level items
+  final Map<int, Task>
+      _items; //contains unfinished or due tasks for today or even future
+  List<int> _topItemsOrder; //only top-level items of _items
+  Map<String, List<Task>> upcomingTasks;
   int nTodayTask;
 
-  final String _todayStr = 'DATE';
-  final String _tasksOrderStr = 'TASKS_ORDER';
-  final String _nTodayTaskStr = 'TASKS_NUM';
+  static const _todayStr = 'DATE';
+  static const _tasksOrderStr = 'TASKS_ORDER';
+  static const _nTodayTaskStr = 'TASKS_NUM';
+
+  bool needsRebuildUpcomingTasks = true;
 
   /// Gets a list of top-level tasks
-  List<Task> get tasks {
+  List<Task> get todayTasks {
     return List.generate(_topItemsOrder.length, (index) {
       return _items[_topItemsOrder[index]];
     });
+  }
+
+  Future<int> countTasksInDate(DateTime dateTime) async {
+    if (dateTime == null) return 0;
+    if (needsRebuildUpcomingTasks || upcomingTasks == null) {
+      upcomingTasks = await dbProvider.upcomingTasks;
+      needsRebuildUpcomingTasks = false;
+    }
+
+    return upcomingTasks[dateTime.toHyphenedYYYYMMDD()]?.length ?? 0;
   }
 
   /// Insert a task into database
@@ -35,31 +49,73 @@ class TaskModel extends ChangeNotifier {
   /// 2. insert tagIDs into 'TagTask' table
   /// Both of them will be handled by [DatabaseProvider.insertTask]
   /// [posBefore] defines the position where the task will be inserted
-  void insertTask(
-      String description, DateTime deadline, List<int> labelIds, int parentId,
-      [int posBefore = -1]) async {
-    Task task = Task(
-      description,
-      labelIds: labelIds,
-      deadline: deadline,
-    );
-    var id = await dbProvider.insertTask(task, parentId);
+  Future<void> insertTask(String description, DateTime deadline,
+      [List<int> labelIds,
+      int parentId,
+      String note = '',
+      int posBefore = -1]) async {
+    Task task = Task(description,
+        labelIds: labelIds, deadline: deadline, note: note, parentId: parentId);
+    var id = await dbProvider.insertTask(task);
     task.id = id;
     _items[id] = task;
 
-    if (parentId == null) {
-      if (posBefore != -1)
-        _topItemsOrder.insert(posBefore + 1, id);
-      else
-        _topItemsOrder.add(id);
-      _saveTasksOrder();
-    } else {
-      _items[parentId].subTask.add(task);
+    // whether to display it
+    assert(task.isCompleted == false);
+    if (deadline <= DateTimeFormatter.tomorrow) {
+      if (!task.hasParent) {
+        if (posBefore != -1)
+          _topItemsOrder.insert(posBefore, id);
+        else
+          _topItemsOrder.add(id);
+        _saveTasksOrder();
+      } else {
+        print('${task.hasParent} ==> ${task.parentId}');
+        _items[parentId].subTask.add(task);
+      }
+    }
+
+    notifyListeners();
+  }
+
+  /// Updates a task
+  ///
+  /// Only updates descriptive filed of a task
+  Future<void> updateTask(
+    int id,
+    String description,
+    DateTime deadline, [
+    List<int> labelIds,
+    String note = '',
+  ]) async {
+    // in order to update a task, the user has to press an existing one on the
+    // screen which means it must already be part of [_items]
+    assert(_items[id] != null);
+    assert(_items[id].id == id);
+    final prevDate = _items[id].deadline;
+    final task = _items[id]
+      ..description = description
+      ..labelIds = labelIds
+      ..deadline = deadline
+      ..note = note;
+    await dbProvider.updateTask(task);
+
+    if (deadline > prevDate) {
+      if (_topItemsOrder.remove(id)) _saveTasksOrder();
+      _items.remove(id);
     }
     notifyListeners();
   }
 
-  void updateTask() {}
+  /// Deletes a task
+  Future<void> deleteTask(int id) async {
+    if (_topItemsOrder.remove(id)) _saveTasksOrder();
+    _items.remove(id);
+    needsRebuildUpcomingTasks = true;
+    await dbProvider.deleteTask(id);
+
+    notifyListeners();
+  }
 
   /// Completes a task
   ///
@@ -74,6 +130,7 @@ class TaskModel extends ChangeNotifier {
             : [],
         tempTopItemsOrder = List<int>.from(_topItemsOrder);
     var isAmongTopItems = false;
+
     if (_topItemsOrder.contains(id)) {
       _topItemsOrder.remove(id);
       _saveTasksOrder();
@@ -118,10 +175,6 @@ class TaskModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _formatDDMMYYYY(DateTime dateTime) {
-    return '${dateTime.day}-${dateTime.month}-${dateTime.year}';
-  }
-
   //todo extract sharedPreferences logic
   void _saveTasksOrder() async {
     final prefs = await SharedPreferences.getInstance();
@@ -147,7 +200,7 @@ class TaskModel extends ChangeNotifier {
     List<Task> topLevelTasks = dbResults[1];
 
     var time = DateTime.now();
-    if (prefs.getString(_todayStr) == _formatDDMMYYYY(time)) {
+    if (prefs.getString(_todayStr) == time.toHyphenedYYYYMMDD()) {
       var str = prefs.getString(_tasksOrderStr);
       _topItemsOrder = (jsonDecode(str) as List).map((e) => e as int).toList();
       nTodayTask = prefs.getInt(_nTodayTaskStr);
@@ -156,7 +209,7 @@ class TaskModel extends ChangeNotifier {
       nTodayTask = _topItemsOrder.length;
       var json = jsonEncode(_topItemsOrder);
       prefs.setString(_tasksOrderStr, json);
-      prefs.setString(_todayStr, _formatDDMMYYYY(time));
+      prefs.setString(_todayStr, time.toHyphenedYYYYMMDD());
       prefs.setInt(_nTodayTaskStr, _topItemsOrder.length);
     }
     notifyListeners();

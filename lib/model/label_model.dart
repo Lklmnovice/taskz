@@ -4,25 +4,19 @@ import 'package:taskz/model/data/label.dart';
 import 'package:taskz/services/database_provider.dart';
 import 'package:taskz/services/locator.dart';
 
-
-
 class LabelModel extends ChangeNotifier {
   LabelModel()
-      : _items={},
+      : _items = {},
         dbProvider = locator<DatabaseProvider>();
 
-
   final DatabaseProvider dbProvider;
-  final Map<int,Label> _items;
-
-
-
-
+  final Map<int, Label> _items;
 
   Iterable<Label> get labels => _items.values;
 
-  void insertLabel(String description, int colorValue) async {
-    var label = Label(description, colorValue: colorValue);
+  void insertLabel(String description, [int colorValue]) async {
+    var label =
+        Label(description, colorValue: colorValue ?? Label.kDefaultColor);
     var id = await dbProvider.insertLabel(label);
 
     label.id = id;
@@ -34,11 +28,13 @@ class LabelModel extends ChangeNotifier {
   Tag getTagByID(int id) {
     if (_items.isNotEmpty) {
       var label = _items[id];
-      return Tag(desc: label.description, color: label.colorValue,);
+      return Tag(
+        desc: label.description,
+        color: label.colorValue,
+      );
     } else
       return null;
   }
-
 
   void updateByID(int id, String description, int colorValue) async {
     var label = Label(description, id: id, colorValue: colorValue);
@@ -59,10 +55,10 @@ class LabelModel extends ChangeNotifier {
   /// Retrieves data from database
   /// Reserved to [locator]
   Future<void> initialize() async {
-      final labels = await dbProvider.labels;
-      labels.forEach((label) { _items[label.id] = label; });
-      notifyListeners();
+    final labels = await dbProvider.labels;
+    labels.forEach((label) {
+      _items[label.id] = label;
+    });
+    notifyListeners();
   }
-
-
 }

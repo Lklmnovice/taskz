@@ -1,34 +1,160 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:taskz/model/data/label.dart';
+import 'package:taskz/model/label_model.dart';
 
+Future<void> showUpdateTag(BuildContext context, [Label label]) {
+  return showModalBottomSheet(
+      backgroundColor: Theme.of(context).colorScheme.secondary,
+      context: context,
+      shape: ContinuousRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+      isScrollControlled: true,
+      enableDrag: true,
+      builder: (context) => AnimatedContainer(
+            duration: Duration(milliseconds: 200),
+            padding: EdgeInsets.only(
+                top: 12,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16),
+            child: _AddLabelPage(label: label),
+          ));
+}
+
+class _AddLabelPage extends StatefulWidget {
+  _AddLabelPage({this.label});
+
+  final Label label;
+  @override
+  _AddLabelPageState createState() => _AddLabelPageState();
+}
+
+class _AddLabelPageState extends State<_AddLabelPage> {
+  final _form = GlobalKey<FormState>();
+  TextEditingController _controller;
+  ColorWrapper _colorWrapper;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+
+    if (widget.label == null)
+      _colorWrapper = ColorWrapper(color: _Colors[4]);
+    else {
+      _colorWrapper =
+          ColorWrapper(color: ('#' + widget.label.colorString).toUpperCase());
+      _controller.text = widget.label.description;
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label == null ? '> add new tag' : '> edit your tag',
+          textAlign: TextAlign.left,
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 12),
+        ),
+        Divider(
+          color: Theme.of(context).colorScheme.secondaryVariant,
+        ),
+        FormAddLabel(
+          formKey: _form,
+          colorWrapper: _colorWrapper,
+          descCon: _controller,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            (widget.label == null)
+                ? Container()
+                : IconButton(
+                    icon: Icon(
+                      Icons.delete_forever,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    onPressed: () {
+                      Provider.of<LabelModel>(context, listen: false)
+                          .deleteByID(widget.label.id);
+                      Navigator.pop(context);
+                    },
+                  ),
+            FlatButton(
+                child: Text(
+                  (widget.label == null) ? 'ADD' : 'UPDATE',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.error),
+                ),
+                onPressed: () {
+                  if (_form.currentState.validate()) {
+                    if (widget.label == null)
+                      Provider.of<LabelModel>(context, listen: false)
+                          .insertLabel(_controller.text,
+                              colorHexToIntWithHash(_colorWrapper.color));
+                    else
+                      Provider.of<LabelModel>(context, listen: false)
+                          .updateByID(widget.label.id, _controller.text,
+                              colorHexToIntWithHash(_colorWrapper.color));
+                    Navigator.pop(context);
+                  }
+                }),
+          ],
+        ),
+      ],
+    );
+  }
+}
 
 class FormAddLabel extends StatefulWidget {
-  final Key key;
+  final Key formKey;
   final TextEditingController descCon;
   final ColorWrapper colorWrapper;
 
-
-  FormAddLabel({this.key, this.descCon, this.colorWrapper});
+  FormAddLabel({this.formKey, this.descCon, this.colorWrapper});
 
   @override
   _FormAddLabelState createState() => _FormAddLabelState();
 }
 
-
 class _FormAddLabelState extends State<FormAddLabel> {
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: widget.key,
+      key: widget.formKey,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal:16),
+        padding: EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             TextFormField(
+              autofocus: true,
               decoration: InputDecoration(
-                  labelText: 'Description'
-              ),
+                  border: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.secondaryVariant),
+                  ),
+                  labelText: 'Description:',
+                  labelStyle: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary),
+                  floatingLabelBehavior: FloatingLabelBehavior.always),
               controller: widget.descCon,
               validator: (value) => value.isEmpty ? 'empty description' : null,
             ),
@@ -36,25 +162,37 @@ class _FormAddLabelState extends State<FormAddLabel> {
               alignedDropdown: true,
               child: DropdownButtonFormField<String>(
                 decoration: InputDecoration(
-                    labelText: 'Color'
-                ),
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                          color:
+                              Theme.of(context).colorScheme.secondaryVariant),
+                    ),
+                    labelText: 'Color:',
+                    labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary),
+                    floatingLabelBehavior: FloatingLabelBehavior.always),
                 value: widget.colorWrapper.color,
-
                 items: [
-                  for (final color in Colors)
+                  for (final color in _Colors)
                     DropdownMenuItem<String>(
                       value: color,
                       child: Row(
                         children: <Widget>[
-                          Icon(Icons.label, color: Color(colorHexToIntWithHash(color)),),
-                          SizedBox(width: 16,),
+                          Icon(
+                            Icons.label,
+                            color: Color(colorHexToIntWithHash(color)),
+                          ),
+                          SizedBox(
+                            width: 16,
+                          ),
                           Text(color)
                         ],
                       ),
                     )
                 ],
                 validator: (value) {
-                  return Colors.contains(value) ? null : 'not a color';
+                  return _Colors.contains(value) ? null : 'not a color';
                 },
                 isExpanded: true,
                 hint: Text('Choose a color'),
@@ -77,12 +215,11 @@ class ColorWrapper {
   ColorWrapper({this.color});
 }
 
-
 int colorHexToIntWithHash(String color) {
   return int.parse(color.substring(1), radix: 16);
 }
 
-const List<String> Colors =  [
+const List<String> _Colors = [
   '#FFF44336',
   '#FFFFEBEE',
   '#FFFFCDD2',

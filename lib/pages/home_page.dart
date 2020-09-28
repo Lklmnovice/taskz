@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
-import 'package:taskz/custom_widgets/custom_reorderable_listview.dart';
-import 'package:taskz/custom_widgets/tile.dart';
+import 'package:taskz/custom_widgets/custom_reorderable_sliver_list.dart'
+    as Custom;
+import 'package:taskz/custom_widgets/task_widget.dart';
 import 'package:taskz/model/data/task.dart';
 import 'package:taskz/model/task_model.dart';
 import 'package:taskz/pages/add_task.dart';
@@ -19,7 +20,7 @@ const MAIN_MARGIN = 24.0;
 class HomePage extends StatelessWidget {
   static final pageRoute = '/';
   final _backdropKey = GlobalKey<__BackDropState>();
-  final _dfabKey = GlobalKey<DraggableFloatingActionButtonState>();
+  final _dfabKey = GlobalKey<Custom.DraggableFloatingActionButtonState>();
   final _drawerKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -27,7 +28,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       key: _drawerKey,
       endDrawer: CustomDrawer(),
-      floatingActionButton: DraggableFloatingActionButton(
+      floatingActionButton: Custom.DraggableFloatingActionButton(
         key: _dfabKey,
         floatingActionButton: FloatingActionButton(
             onPressed: () {
@@ -44,7 +45,9 @@ class HomePage extends StatelessWidget {
           CustomScrollView(
             slivers: <Widget>[
               DailyInfoAppBar(backdropKey: _backdropKey, drawerKey: _drawerKey),
-              TaskList()
+              TaskList(
+                fabKey: _dfabKey,
+              )
             ],
           ),
         ],
@@ -192,7 +195,7 @@ class TodayProgressIndicator extends StatelessWidget {
       future: locator.allReady(),
       builder: (context, snapshot) {
         final model = snapshot.hasData ? locator<TaskModel>() : null;
-        int uncompleted = snapshot.hasData ? model.tasks.length : 0;
+        int uncompleted = snapshot.hasData ? model.todayTasks.length : 0;
         int total = snapshot.hasData ? model.nTodayTask : 0;
         //todo fix the bug
         if (total == 0) total = 1;
@@ -267,6 +270,9 @@ class __BackDropState extends State<_BackDrop> {
 }
 
 class TaskList extends StatefulWidget {
+  TaskList({this.fabKey});
+
+  final GlobalKey<Custom.DraggableFloatingActionButtonState> fabKey;
   @override
   _TaskListState createState() => _TaskListState();
 }
@@ -284,9 +290,12 @@ class _TaskListState extends State<TaskList> {
           if (snapshot.hasData)
             return Consumer<TaskModel>(
               builder: (context, model, child) {
-                final todos = model.tasks;
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
+                final todos = model.todayTasks;
+                return Custom.CustomReorderableSliverList(
+                  fabKey: widget.fabKey,
+                  onReorder: (oldIndex, newIndex) =>
+                      locator<TaskModel>().updateTaskOrder(oldIndex, newIndex),
+                  delegate: Custom.ReorderableSliverChildBuilderDelegate(
                     (context, index) {
                       return buildTile(context, todos[index], true);
                     },
@@ -305,7 +314,7 @@ class _TaskListState extends State<TaskList> {
 
   TaskWidget buildTile(BuildContext context, Task task, bool isParent) {
     List<TaskWidget> subTasks = [
-      for (var t in task.subTask) buildTile(context, t, false)
+      for (var t in task?.subTask ?? []) buildTile(context, t, false)
     ];
 
     return TaskWidget(
