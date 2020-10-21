@@ -57,6 +57,10 @@ extension CustomDateTime on DateTime {
     return MONTH_STR[month - 1];
   }
 
+  String getMonthYearStr() {
+    return getMonthStr() + ' $year';
+  }
+
   DateTime toMonthEnd() {
     final isLeapYear = DateTimeFormatter.isLeapYear(this.year);
     final str = this.toHyphenedYYYYMMDD().substring(0, 8);
@@ -70,6 +74,16 @@ extension CustomDateTime on DateTime {
     final str = this.toHyphenedYYYYMMDD().substring(0, 8);
     final day = 1;
     return DateTime.parse(str + day.toPaddedString());
+  }
+
+  DateTime toWeekStart() {
+    int weekday = this.weekday;
+    return add(Duration(days: (1 - weekday)));
+  }
+
+  DateTime toDayStart() {
+    final str = this.toHyphenedYYYYMMDD();
+    return DateTime.parse(str);
   }
 
   bool operator <(Object other) =>

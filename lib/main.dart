@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:taskz/pages/filtered_page.dart';
 import 'package:taskz/services/locator.dart';
-import 'package:taskz/model/task_model.dart';
+import 'package:taskz/model/task_model_new.dart';
 import 'package:taskz/pages/home_page.dart';
 import 'package:taskz/pages/test_page.dart';
 import 'package:taskz/pages/upcoming_page.dart';
@@ -58,10 +59,15 @@ Widget _myApp() {
       // Define the default TextTheme. Use this to specify the default
       // text styling for headlines, titles, bodies of text, and more.
     ),
-    routes: <String, WidgetBuilder>{
-      HomePage.pageRoute: (context) => HomePage(),
-      UpcomingPage.pageRoute: (context) => UpcomingPage(),
-      TestPage.pageRoute: (context) => TestPage(),
+    onGenerateRoute: (RouteSettings settings) {
+      var routes = <String, WidgetBuilder>{
+        HomePage.pageRoute: (context) => HomePage(),
+        UpcomingPage.pageRoute: (context) => UpcomingPage(),
+        TestPage.pageRoute: (context) => TestPage(),
+        FilteredPage.pageRoute: (context) => FilteredPage(settings: settings),
+      };
+      WidgetBuilder builder = routes[settings.name];
+      return MaterialPageRoute(builder: (ctx) => builder(ctx));
     },
   );
 }

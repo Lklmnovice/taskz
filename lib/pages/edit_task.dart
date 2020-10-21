@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:taskz/custom_widgets/date_button.dart';
 import 'package:taskz/model/data/task.dart';
 import 'package:taskz/model/label_model.dart';
-import 'package:taskz/model/task_model.dart';
+import 'package:taskz/model/task_model_new.dart';
 import 'package:taskz/pages/add_task.dart';
 import 'package:taskz/services/locator.dart';
 import 'package:taskz/services/time_util.dart';
@@ -198,6 +198,7 @@ class __EditTaskPageState extends State<_EditTaskPage> {
                             ),
                             onPressed: () {
                               Provider.of<TaskModel>(context, listen: false)
+                                  .pageId(-1)
                                   .deleteTask(widget.task.id);
                               Navigator.pop(context);
                             },
@@ -213,6 +214,7 @@ class __EditTaskPageState extends State<_EditTaskPage> {
                               onPressed: () {
                                 if (formKey.currentState.validate()) {
                                   Provider.of<TaskModel>(context, listen: false)
+                                      .pageId(-1)
                                       .updateTask(
                                           widget.task.id,
                                           _controller.text,
@@ -263,11 +265,12 @@ class _SubtaskTile extends StatefulWidget {
 
 class __SubtaskTileState extends State<_SubtaskTile> {
   bool state = false;
-
+  //todo add slide to complete
   @override
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircularCheckBox(
+        onChanged: (value) => locator,
         value: state,
       ),
       title: Text(widget.task.description,

@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:inview_notifier_list/inview_notifier_list.dart';
 import 'package:provider/provider.dart';
-import 'package:taskz/model/task_model.dart';
+import 'package:taskz/custom_widgets/date_item.dart';
 import 'package:taskz/services/time_util.dart';
-
-import 'package:taskz/extended_color_scheme.dart';
 
 class _MonthData extends ChangeNotifier {
   DateTime _dateTime = DateTimeFormatter.today;
@@ -132,32 +130,6 @@ Widget _QuickOption(
 
 const CALENDAR_E_HEIGHT = 32.0;
 
-class _FixedRow extends StatelessWidget {
-  _FixedRow({
-    this.strs,
-    this.textColor,
-  }) : assert(strs.length == 7);
-
-  final List<String> strs;
-  final Color textColor;
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        for (final s in strs)
-          Container(
-            width: CALENDAR_E_HEIGHT,
-            height: CALENDAR_E_HEIGHT,
-            alignment: Alignment.center,
-            child: Text(s, style: TextStyle(fontSize: 14, color: textColor)),
-          )
-      ],
-    );
-  }
-}
-
 class _CalendarHeader extends StatefulWidget {
   _CalendarHeader({this.mainContext, this.scrollController});
 
@@ -260,9 +232,8 @@ class _CalendarHeaderDelegate extends SliverPersistentHeaderDelegate {
                   ],
                 ),
               ),
-            _FixedRow(
-              textColor: Theme.of(context).colorScheme.primaryVariant2,
-              strs: const ['M', 'T', 'T', 'W', 'F', 'S', 'S'],
+            WeekdaysRow(
+              textColor: Theme.of(context).colorScheme.primary,
             ),
             Container(
               height: _dataRow,
@@ -371,97 +342,12 @@ class _Month extends StatelessWidget {
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
       ),
-      itemBuilder: (context, index) => _Item(
+      itemBuilder: (context, index) => Item(
         date: _data[index],
         textColor: Theme.of(context).colorScheme.primary,
       ),
       itemCount: _data.length,
       shrinkWrap: true,
     );
-  }
-}
-
-class _Item extends StatelessWidget {
-  _Item({this.textColor, this.date});
-
-  final Color textColor;
-  final DateTime date;
-
-  @override
-  Widget build(BuildContext context) {
-    final String str = date?.day?.toString();
-    return GestureDetector(
-      onTap: () => Navigator.of(context).pop(date),
-      child: Consumer<TaskModel>(
-        builder: (context, model, child) {
-          return FutureBuilder<int>(
-              future: model.countTasksInDate(date),
-              builder: (context, snapshot) {
-                final _widget = (str != null && snapshot.hasData)
-                    ? Positioned(
-                        bottom: 0,
-                        child: (snapshot.data == 0)
-                            ? Container()
-                            : (snapshot.data < 4) ? _Dot() : _Dot.double(),
-                      )
-                    : Container();
-                return Container(
-                    width: CALENDAR_E_HEIGHT,
-                    height: CALENDAR_E_HEIGHT,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        if (child != null) child,
-                        if (_widget != null) _widget
-                      ],
-                    ));
-              });
-        },
-        child: str != null
-            ? Text(str, style: TextStyle(fontSize: 14, color: textColor))
-            : Container(),
-      ),
-    );
-  }
-}
-
-class _Dot extends StatelessWidget {
-  _Dot.double() : isDouble = true;
-  _Dot() : isDouble = false;
-
-  final bool isDouble;
-  final _size = 5.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return isDouble
-        ? Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: _size,
-                height: _size,
-                decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error,
-                    shape: BoxShape.circle),
-              ),
-              SizedBox(width: 2),
-              Container(
-                width: _size,
-                height: _size,
-                decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error,
-                    shape: BoxShape.circle),
-              ),
-            ],
-          )
-        : Container(
-            width: _size,
-            height: _size,
-            decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.error,
-                shape: BoxShape.circle),
-          );
   }
 }

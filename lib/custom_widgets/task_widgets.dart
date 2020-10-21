@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:taskz/model/label_model.dart';
@@ -5,9 +6,105 @@ import 'package:taskz/model/data/task.dart';
 import 'package:circular_check_box/circular_check_box.dart';
 import 'package:taskz/extended_color_scheme.dart';
 
-import 'package:taskz/model/task_model.dart';
+import 'package:taskz/model/task_model_new.dart';
 import 'package:taskz/pages/edit_task.dart';
+import 'package:taskz/pages/home_page.dart';
+
+import 'package:taskz/custom_widgets/custom_reorderable_sliver_list.dart'
+    as Custom;
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:taskz/services/locator.dart';
+
+class TaskList extends StatefulWidget {
+  TaskList({
+    @required this.fabKey,
+    @required this.isReady,
+    this.getSubModel,
+    this.limit,
+  }) {
+    getSubModel ??= () => locator<TaskModel>().pageId(-1, m: Model.TODAY);
+  }
+
+  final GlobalKey<Custom.DraggableFloatingActionButtonState> fabKey;
+  final Future<void> isReady;
+  final DateTime limit;
+  Function getSubModel;
+
+  static TaskList of(BuildContext context) {
+    return context.findAncestorWidgetOfExactType<TaskList>();
+  }
+
+  @override
+  _TaskListState createState() => _TaskListState();
+
+/*  @override
+  bool updateShouldNotify(covariant TaskList oldWidget) {
+    return id != oldWidget.id ||
+        fabKey != oldWidget.fabKey ||
+        getTasks != oldWidget.getTasks ||
+        isReady != oldWidget.isReady ||
+        limit != oldWidget.limit ||
+        model != oldWidget.model;
+  }*/
+}
+
+class _TaskListState extends State<TaskList> {
+  List<Task> todos;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: MAIN_MARGIN),
+      sliver: FutureBuilder<void>(
+        initialData: null,
+        future: widget.isReady,
+        builder: (context, snapshot) {
+          if (snapshot.hasData)
+            return Consumer<TaskModel>(
+              builder: (context, model, child) {
+                final todos =
+                    widget.getSubModel()?.tasks ?? []; //get tasks from submodel
+
+                print("from task list ${todos.toString()}");
+                return Custom.CustomReorderableSliverList(
+                  fabKey: widget.fabKey,
+                  onReorder: (oldIndex, newIndex) =>
+                      widget.getSubModel().updateTaskOrder(oldIndex, newIndex),
+                  delegate: Custom.ReorderableSliverChildBuilderDelegate(
+                    (context, index) {
+                      return buildTile(context, todos[index], true);
+                    },
+                    childCount: todos.length,
+                  ),
+                );
+              },
+            );
+          else
+            return SliverToBoxAdapter(
+                child: SpinKitCubeGrid(
+                    size: 50, color: Theme.of(context).colorScheme.error));
+        },
+      ),
+    );
+  }
+
+  TaskWidget buildTile(BuildContext context, Task task, bool isParent) {
+    List<TaskWidget> subTasks = [
+      if (widget.limit != null)
+        for (var t in task?.subTasksFilteredBy(widget.limit) ?? [])
+          buildTile(context, t, false)
+      else
+        for (var t in task?.subTask ?? []) buildTile(context, t, false)
+    ];
+
+    return TaskWidget(
+      key: ValueKey(task.id),
+      task: task,
+      subTasks: subTasks,
+      isParent: isParent,
+    );
+  }
+}
 
 class TaskWidget extends StatelessWidget {
   final Key key;
@@ -148,9 +245,13 @@ class _TaskContentTileState extends State<_TaskContentTile> {
               Duration(
                 milliseconds: 350,
               ),
-              () => locator<TaskModel>().completeTask(context, widget.task.id));
+              () => TaskList.of(context)
+                  .getSubModel()
+                  .completeTask(context, widget.task.id));
         } else {
-          locator<TaskModel>().completeTask(context, widget.task.id);
+          TaskList.of(context)
+              .getSubModel()
+              .completeTask(context, widget.task.id);
         }
       }
     });

@@ -134,6 +134,29 @@ WHERE isCompleted = 0
     return _parseTasks(results);
   }
 
+  Future<List<Task>> getTasksOnDate(DateTime dateTime) async {
+    final Database db = await database;
+    dateTime = dateTime.toDayStart();
+    int seconds = dateTime.millisecondsSinceEpoch ~/ 1000;
+    int limit = seconds + 24 * 60 * 60;
+    print("seconds: $seconds limit $limit");
+    final List<Map<String, dynamic>> results = await db.rawQuery('''
+SELECT k.${Task.cId} AS id, k.${Task.cDescription}, k.${Task.cDeadline}, k.${Task.cIsCompleted}, k.${Task.cPriority}, k.${Task.cParentTaskId}, g.id AS tagId, k.${Task.cNote}
+FROM Task k 
+	LEFT JOIN TagTask tk ON k.id = tk.taskId 
+	LEFT JOIN Tag g ON g.id = tk.tagId
+WHERE isCompleted = 0
+	AND 
+		(deadline >= ?
+			AND deadline < ?);
+  ''', [seconds, limit]);
+    print(results);
+    final res = _parseTasks(results)[1];
+    print(res);
+
+    return res;
+  }
+
   /// inserts a task into database
   ///
   /// First inserts the task
@@ -205,6 +228,34 @@ WHERE isCompleted = 0
     return ret;
   }
 
+  Future<Map<int, Task>> get allUnfinishedTasks async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> results = await db.rawQuery('''
+SELECT k.id AS id, k.description, k.deadline, k.isCompleted, k.priority, k.parentTaskId, g.id AS tagId
+FROM Task k 
+	LEFT JOIN TagTask tk ON k.id = tk.taskId 
+	LEFT JOIN Tag g ON g.id = tk.tagId
+WHERE isCompleted = 0
+	AND (deadline is null or (deadline >= strftime('%s', 'now','localtime',  'start of day')));
+  ''');
+    final map = _parseTasks(results)[0];
+    return map;
+  }
+
+  Future<List<Task>> labelFilteredTasks(int id) async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> results = await db.rawQuery('''
+SELECT k.id AS id, k.description, k.deadline, k.isCompleted, k.priority, k.parentTaskId, g.id AS tagId
+FROM Task k 
+	LEFT JOIN TagTask tk ON k.id = tk.taskId 
+	LEFT JOIN Tag g ON g.id = tk.tagId
+WHERE isCompleted = 0
+	AND (deadline is null or (deadline >= strftime('%s', 'now','localtime',  'start of day')))
+	AND tk.tagId = ?;
+  ''', [id]);
+    return _parseTasks(results)[1];
+  }
+
   /// Completes a task by id
   ///
   /// If a parent task gets completed, all its child tasks are getting completed
@@ -226,7 +277,7 @@ WHERE isCompleted = 0
   List<dynamic> _parseTasks(final List<Map<String, dynamic>> results) {
     Map<int, Task> map = {};
     Set<Task> topLevelTasks = {};
-
+    if (results.isEmpty) return [map, topLevelTasks.toList()];
     for (var row in results) {
       Task newTask;
       //initialize task in map
@@ -239,7 +290,7 @@ WHERE isCompleted = 0
             row['priority'],
             row['note'],
             [],
-            [],
+            [if (row['tagId'] != null) row['tagId']],
             row['parentTaskId']);
         map[row['id']] = newTask;
       } else {

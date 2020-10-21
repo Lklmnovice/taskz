@@ -2,8 +2,8 @@ import 'package:extended_text_field/extended_text_field.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:taskz/custom_widgets/tag_selection_panel.dart';
-import 'file:///C:/Users/lenovo/Desktop/projects/dart/taskz/lib/services/locator.dart';
 import 'package:taskz/model/label_model.dart';
+import 'package:taskz/services/locator.dart';
 
 abstract class CustomSpecialText extends SpecialText {
   final int start;

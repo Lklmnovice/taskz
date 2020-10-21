@@ -1,16 +1,44 @@
-# taskz
+## Taskz
 
-Sailor-tailored task management application to improve your productivity and stop procrastinating  
+#### Description:
+A mobile application for daily tasks management, built with Flutter/Dart, Provider and SQLite
 
-## Getting Started
+## Project Status
+- [x] UI
+    + [x] Home page
+    + [x] Upcoming page
+    + [ ] settings page
+    + [ ] projects page
+    + [x] Custom date picker
+    + [x] Custom FAB animation
+- [x] Database schema 
+- [x] Add/Delete/Update/Complete task/sub-task
+- [x] Add/Delete/Update tag
+- [x] Top-level task reordering
+- [x] daily task progress tracker 
+- [ ] slide to complete sub-tasks
+- [ ] reorder sub-tasks
+- [ ] bug fixes
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+#### progress:
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+This project is almost finished but there're still some instability to be tackled. Currently the user 
+can add task and sub-tasks with tags and reorder them. Settings page and projects page are still under development.
+
+## Projects Preview
+adding new tasks           | adding new tags           | upcoming page
+:-------------------------:|:-------------------------:|:-------------------------:|
+![](./res/new_task_1.gif)  |  ![](./res/new_tag.gif)   | ![](./res/new_tag.gif)
+
+## Installation and Setup Instructions
+
+Clone down this repository. You will need `flutter` and `dart` installed on your machine.   
+
+Update/Get packages: 
+`flutter pub get` 
+
+To run the application:
+`flutter run`  
+

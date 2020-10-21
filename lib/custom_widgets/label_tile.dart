@@ -7,12 +7,14 @@ class LabelTile extends StatelessWidget {
       {this.label,
       this.iconSize = 32,
       this.onTap,
+      this.onLongPress,
       this.backgroundColor = Colors.transparent,
       this.textColor = Colors.black,
       this.padding = const EdgeInsets.symmetric(horizontal: 4)});
 
   final double iconSize;
   final GestureTapCallback onTap;
+  final GestureLongPressCallback onLongPress;
   final Color backgroundColor, textColor;
   final Label label;
   final EdgeInsets padding;
@@ -24,6 +26,7 @@ class LabelTile extends StatelessWidget {
       // color: Colors.transparent,
       color: backgroundColor,
       child: ListTile(
+        onLongPress: onLongPress,
         onTap: onTap,
         leading: Icon(
           Icons.label,

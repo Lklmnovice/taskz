@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:taskz/custom_widgets/label_tile.dart';
 import 'package:taskz/model/label_model.dart';
 import 'package:taskz/extended_color_scheme.dart';
+import 'package:taskz/pages/filtered_page.dart';
 import 'package:taskz/pages/home_page.dart';
 import 'package:taskz/pages/upcoming_page.dart';
 import 'package:taskz/pages/add_edit_label.dart';
@@ -173,9 +174,21 @@ class CustomDrawer extends StatelessWidget {
                           iconSize: iconSize,
                           onTap: () {
                             Navigator.pop(context);
-                            Future.delayed(Duration(milliseconds: 100),
+                            Future.delayed(
+                                Duration(milliseconds: 100),
+                                // () => showUpdateTag(context, label)
+                                () => Navigator.pushNamed(
+                                    context, FilteredPage.pageRoute,
+                                    arguments: label));
+                          },
+                          onLongPress: () {
+                            Navigator.pop(context);
+                            Future.delayed(
+                                Duration(milliseconds: 100),
                                 () => showUpdateTag(context, label));
-                          })
+                          },
+                      ),
+
                   ],
                 );
               },

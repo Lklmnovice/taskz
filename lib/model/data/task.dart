@@ -1,3 +1,5 @@
+import 'package:taskz/services/time_util.dart';
+
 /// Task data class
 ///
 /// ```sql
@@ -117,4 +119,10 @@ class Task {
   }
 
   bool get hasParent => parentId != null && parentId != -1;
+
+  Iterable<Task> subTasksFilteredBy(DateTime dateTime) {
+    dateTime = dateTime.toMonthStart();
+    return subTask
+        .where((task) => task.deadline == null || task.deadline < dateTime);
+  }
 }

@@ -1,14 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
+import 'package:taskz/custom_widgets/custom_appBar_FAB.dart';
 import 'package:taskz/custom_widgets/custom_reorderable_sliver_list.dart'
     as Custom;
-import 'package:taskz/custom_widgets/task_widget.dart';
-import 'package:taskz/model/data/task.dart';
-import 'package:taskz/model/task_model.dart';
-import 'package:taskz/pages/add_task.dart';
+import 'package:taskz/custom_widgets/task_widgets.dart';
+import 'package:taskz/model/task_model_new.dart';
 import 'package:taskz/pages/drawer.dart';
 import 'package:taskz/services/locator.dart';
 import 'package:taskz/services/time_util.dart';
@@ -18,7 +16,7 @@ const APPBAR_HEIGHT = 56.0;
 const MAIN_MARGIN = 24.0;
 
 class HomePage extends StatelessWidget {
-  static final pageRoute = '/';
+  static const pageRoute = '/';
   final _backdropKey = GlobalKey<__BackDropState>();
   final _dfabKey = GlobalKey<Custom.DraggableFloatingActionButtonState>();
   final _drawerKey = GlobalKey<ScaffoldState>();
@@ -28,16 +26,8 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       key: _drawerKey,
       endDrawer: CustomDrawer(),
-      floatingActionButton: Custom.DraggableFloatingActionButton(
-        key: _dfabKey,
-        floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              // Navigator.of(context).pushNamed('/add_task');
-              showAddTaskPanel(context);
-            },
-            backgroundColor: Theme.of(context).colorScheme.error,
-            foregroundColor: Theme.of(context).colorScheme.secondary,
-            child: Icon(Icons.add)),
+      floatingActionButton: CustomFAB(
+        dfabKey: _dfabKey,
       ),
       body: Stack(
         children: <Widget>[
@@ -46,7 +36,11 @@ class HomePage extends StatelessWidget {
             slivers: <Widget>[
               DailyInfoAppBar(backdropKey: _backdropKey, drawerKey: _drawerKey),
               TaskList(
+                limit: DateTimeFormatter.tomorrow,
                 fabKey: _dfabKey,
+                isReady: locator.allReady(),
+                getSubModel: () =>
+                    locator<TaskModel>().pageId(-1, m: Model.TODAY),
               )
             ],
           ),
@@ -194,15 +188,13 @@ class TodayProgressIndicator extends StatelessWidget {
     return FutureBuilder<void>(
       future: locator.allReady(),
       builder: (context, snapshot) {
-        final model = snapshot.hasData ? locator<TaskModel>() : null;
-        int uncompleted = snapshot.hasData ? model.todayTasks.length : 0;
-        int total = snapshot.hasData ? model.nTodayTask : 0;
-        //todo fix the bug
+        final model = snapshot.hasData ? Provider.of<TaskModel>(context) : null;
+        int total = snapshot.hasData ? model.todayTotalTask : 0;
+        int finished = snapshot.hasData ? model.todayTotalCompletedTasks : 0;
         if (total == 0) total = 1;
-        double value = snapshot.hasData ? (total - uncompleted) / total : 1;
+        double value =
+            snapshot.hasData ? (finished / total).clamp(0.0, 1.0) : 1;
 
-        print(
-            'hasdata=${snapshot.hasData}  uncompleted=$uncompleted  total=$total');
         return Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
@@ -223,7 +215,7 @@ class TodayProgressIndicator extends StatelessWidget {
                 width: 16,
               ),
               Text(
-                '${(total - uncompleted)}/$total',
+                '$finished/$total',
                 style: TextStyle(
                     fontSize: 16,
                     color: Theme.of(context).colorScheme.primaryVariant2),
@@ -266,62 +258,5 @@ class __BackDropState extends State<_BackDrop> {
     setState(() {
       this.progress = progress;
     });
-  }
-}
-
-class TaskList extends StatefulWidget {
-  TaskList({this.fabKey});
-
-  final GlobalKey<Custom.DraggableFloatingActionButtonState> fabKey;
-  @override
-  _TaskListState createState() => _TaskListState();
-}
-
-class _TaskListState extends State<TaskList> {
-  List<Task> todos;
-
-  @override
-  Widget build(BuildContext context) {
-    return SliverPadding(
-      padding: EdgeInsets.symmetric(horizontal: MAIN_MARGIN),
-      sliver: FutureBuilder<void>(
-        future: locator.allReady(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData)
-            return Consumer<TaskModel>(
-              builder: (context, model, child) {
-                final todos = model.todayTasks;
-                return Custom.CustomReorderableSliverList(
-                  fabKey: widget.fabKey,
-                  onReorder: (oldIndex, newIndex) =>
-                      locator<TaskModel>().updateTaskOrder(oldIndex, newIndex),
-                  delegate: Custom.ReorderableSliverChildBuilderDelegate(
-                    (context, index) {
-                      return buildTile(context, todos[index], true);
-                    },
-                    childCount: todos.length,
-                  ),
-                );
-              },
-            );
-          else
-            return SliverToBoxAdapter(
-                child: SpinKitCubeGrid(size: 50, color: Colors.lightBlue));
-        },
-      ),
-    );
-  }
-
-  TaskWidget buildTile(BuildContext context, Task task, bool isParent) {
-    List<TaskWidget> subTasks = [
-      for (var t in task?.subTask ?? []) buildTile(context, t, false)
-    ];
-
-    return TaskWidget(
-      key: ValueKey(task.id),
-      task: task,
-      subTasks: subTasks,
-      isParent: isParent,
-    );
   }
 }

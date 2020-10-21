@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:taskz/custom_widgets/date_button.dart';
 import 'package:taskz/custom_widgets/extended_form_text_field.dart';
 import 'package:taskz/custom_widgets/special_text.dart';
-import 'package:taskz/model/task_model.dart';
+import 'package:taskz/model/task_model_new.dart';
 import 'package:taskz/services/locator.dart';
 
 //add import for showBottomSheetCustom
@@ -105,7 +105,7 @@ class __AddTaskState extends State<_AddTask> {
                     if (_formKey.currentState.validate()) {
                       String desc = textController.text;
                       var ids = builder.labelIds;
-                      locator<TaskModel>().insertTask(
+                      locator<TaskModel>().pageId(-1).insertTask(
                           desc, _datetime, ids, widget.parentId, '', posBefore);
                       //todo: add Adding Notes UI
                       //todo: update UI so user know whether a new task is successfully added

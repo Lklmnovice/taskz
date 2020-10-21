@@ -13,6 +13,7 @@ class LabelModel extends ChangeNotifier {
   final Map<int, Label> _items;
 
   Iterable<Label> get labels => _items.values;
+  Label getById(int id) => _items[id];
 
   void insertLabel(String description, [int colorValue]) async {
     var label =
