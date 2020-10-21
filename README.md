@@ -30,7 +30,7 @@ can add task and sub-tasks with tags and reorder them. Settings page and project
 ## Projects Preview
 adding new tasks           | adding new tags           | upcoming page
 :-------------------------:|:-------------------------:|:-------------------------:|
-![](./res/new_task_1.gif)  |  ![](./res/new_tag.gif)   | ![](./res/new_tag.gif)
+![](./res/new_task_1.gif)  |  ![](./res/new_tag.gif)   | ![](./res/upcoming_pages.gif)
 
 ## Installation and Setup Instructions
 
