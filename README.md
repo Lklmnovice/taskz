@@ -27,7 +27,7 @@ A mobile application for daily tasks management, built with Flutter/Dart, Provid
 This project is almost finished but there're still some instability to be tackled. Currently the user 
 can add task and sub-tasks with tags and reorder them. Settings page and projects page are still under development.
 
-## Projects Preview
+## Project Preview
 adding new tasks           | adding new tags           | upcoming page
 :-------------------------:|:-------------------------:|:-------------------------:|
 ![](./res/new_task_1.gif)  |  ![](./res/new_tag.gif)   | ![](./res/upcoming_pages.gif)
